@@ -26,13 +26,13 @@ import os
 import math
 
 # Global variables
-dataset_path = ''
+dataset_path = 'Dataset/'
 datasets = ['Sampledata_new_1','Sampledata_new_2','Sampledata1','yeast','pima-indians-diabetes','haberman','ecoli2','glass1']
 
 
 models = ['original','smote','db_smote'
-          ,'smote_d','cure_smote','kmeans_smote'
-          ,'adasyn','somo','symprod'
+        #   ,'smote_d','cure_smote','kmeans_smote'
+        #   ,'adasyn','somo','symprod'
           ,'cos'] #Donia
         # 'smote_enn','smote_tl','d_smote','nras' was moved
         # 'dto_smote' can not worked on 'Sampledata1'
@@ -59,10 +59,6 @@ def calc_score(metric,y_test,y_pred,pos_label):
     
     elif metric == 'kappa':
         return metrics.cohen_kappa_score(y_test,y_pred)
-    
-    elif metric == 'auc':
-        # Put the auc here when getting what it is 
-        return None
     
     elif metric == 'accuracy':
         return metrics.accuracy_score(y_test,y_pred)
@@ -225,6 +221,7 @@ def get_cos_para(args):
         visualize = args['visualize']
     else:
         visualize = False
+
     return N,c,alpha,shrink_half,expand_half,all_safe_weight,minlabel,majlabel,visualize
 
 
@@ -240,8 +237,8 @@ def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,sho
     check_dir(path)
     
     if excel_name == None:
-        version = str(time.time())
-        excel_name = 'baseline_'+version+'.xlsx'
+        version = time.strftime('%m%d_%H%M%S')
+        excel_name = 'baseline_'+version+'_'+metric+'_'+classification_model+'.xlsx'
     writer = pd.ExcelWriter(path+excel_name)
     
     for random_state in range(k):
@@ -249,7 +246,7 @@ def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,sho
         scores_df = pd.DataFrame(columns=models,index=datasets)
         
         for dataset in datasets: 
-
+            # print(dataset+":")
             scores = [] 
 
             for model in models:
@@ -314,4 +311,22 @@ def show_baseline(dataset,random_state=None,pos_label=None,**args):
         plt.title(model)
     
     plt.show()
-    return X_train,y_train
+
+
+
+def show_baseline_cos(dataset,random_state=None,pos_label=None,**args): 
+    
+    model = 'cos'
+
+    args['args']['visualize'] = True
+
+    X,y = read_data(dataset_path,dataset)
+
+    X_train,X_test,y_train,y_test = train_test_split(X,y,stratify=y,random_state=random_state)
+
+    pos_label = cos.get_labels(y_test)[0]
+
+    X_oversampled,y_oversampled = oversampling(model,X_train,y_train,args['args'])
+
+    plt.show()
+

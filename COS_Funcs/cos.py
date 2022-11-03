@@ -332,7 +332,12 @@ def generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_
         new_points_half += list(MySmote(area.rep_point,neighbor[label==minlabel],1))
         if show == True:
             print(f"generate 1 points around half safe area of rep point {area.rep_point}")
-            
+
+    if len(new_points_all) == 0:
+        return new_points_half
+    elif len(new_points_half) == 0:
+        return new_points_all
+
     return np.vstack((new_points_all,new_points_half))
 
 
