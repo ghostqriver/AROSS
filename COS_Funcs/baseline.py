@@ -2,6 +2,7 @@ from sklearn import metrics
 import COS_Funcs.metrics as M
 import COS_Funcs.visualize as V
 import COS_Funcs.cos as cos
+import COS_Funcs.generate as G
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -12,7 +13,6 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
-
 
 from smote_variants import (DBSMOTE,DSMOTE,SMOTE_D,CURE_SMOTE,kmeans_SMOTE,SOMO,NRAS,SYMPROD)
 from dtosmote.dto_smote import DTO
@@ -26,13 +26,14 @@ import os
 import math
 
 # Global variables
-dataset_path = ''
+dataset_path = 'Dataset/'
 datasets = ['Sampledata_new_1','Sampledata_new_2','Sampledata1','yeast','pima-indians-diabetes','haberman','ecoli2','glass1']
 
 
 models = ['original','smote','db_smote'
-          ,'smote_d','cure_smote','kmeans_smote'
-          ,'adasyn','somo','symprod'
+        #   ,'smote_d'
+          ,'cure_smote','kmeans_smote'
+        #   ,'adasyn','somo','symprod'
           ,'cos'] #Donia
         # 'smote_enn','smote_tl','d_smote','nras' was moved
         # 'dto_smote' can not worked on 'Sampledata1'
@@ -132,8 +133,8 @@ def oversampling(model,X_train,y_train,*args): # !!!! Donia
         return delaunay.fit_resample(X_train,y_train)
     
     elif model == 'cos':
-        N,c,alpha,shrink_half,expand_half,all_safe_weight,minlabel,majlabel,visualize = get_cos_para(args[0])
-        return cos.COS(X_train,y_train,N,c,alpha,shrink_half,expand_half,all_safe_weight,minlabel,majlabel,visualize)
+        N,c,alpha,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize = get_cos_para(args[0])
+        return cos.COS(X_train,y_train,N,c,alpha,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize)
     
     else:
         return 0
@@ -211,6 +212,26 @@ def get_cos_para(args):
     else:
         all_safe_weight = 2
 
+    if 'all_safe_gen' in args.keys():
+        all_safe_gen = args['all_safe_gen']
+    else:
+        all_safe_gen=G.Smote_Generator
+        
+    if 'half_safe_gen' in args.keys():
+        half_safe_gen = args['half_safe_gen']
+    else:
+        half_safe_gen=G.Smote_Generator   
+
+    if 'gaussian_scale' in args.keys():
+        Gaussian_scale = args['gaussian_scale']
+    else:
+        Gaussian_scale = 0.8  
+
+    if 'ir' in args.keys():
+        IR = args['ir']
+    else:
+        IR=1
+
     if 'minlabel' in args.keys():
         minlabel = args['minlabel']
     else:
@@ -225,7 +246,8 @@ def get_cos_para(args):
         visualize = args['visualize']
     else:
         visualize = False
-    return N,c,alpha,shrink_half,expand_half,all_safe_weight,minlabel,majlabel,visualize
+
+    return N,c,alpha,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize
 
 
 def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,show_folds=False,**args):
@@ -240,8 +262,8 @@ def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,sho
     check_dir(path)
     
     if excel_name == None:
-        version = str(time.time())
-        excel_name = 'baseline_'+version+'.xlsx'
+        version = time.strftime('%m%d_%H%M%S')
+        excel_name = 'baseline_'+version+'_'+metric+'_'+classification_model+'.xlsx'
     writer = pd.ExcelWriter(path+excel_name)
     
     for random_state in range(k):
@@ -314,4 +336,21 @@ def show_baseline(dataset,random_state=None,pos_label=None,**args):
         plt.title(model)
     
     plt.show()
-    return X_train,y_train
+
+
+
+def show_baseline_cos(dataset,random_state=None,pos_label=None,**args): 
+    
+    model = 'cos'
+
+    args['args']['visualize'] = True
+
+    X,y = read_data(dataset_path,dataset)
+
+    X_train,X_test,y_train,y_test = train_test_split(X,y,stratify=y,random_state=random_state)
+
+    pos_label = cos.get_labels(y_test)[0]
+
+    X_oversampled,y_oversampled = oversampling(model,X_train,y_train,args['args'])
+
+    plt.show()
