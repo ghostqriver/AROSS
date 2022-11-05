@@ -6,7 +6,9 @@ note:   because we always run the COS in the notebook(automatically show the fig
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 from . import cos
+from . import generate as G
 
 
 def show_2d_scatter(X,y,minlabel=None,majlabel=None):
@@ -117,6 +119,30 @@ def show_areas(X,y,min_all_safe_area,min_half_safe_area,minlabel=None,majlabel=N
 
     plt.legend()
     plt.show()
+
+
+def draw_cycle(center,r,c='k'):
+
+        x = np.linspace(center[0] - r, center[0] + r, 5000)
+        y1 = np.sqrt(abs(r**2 - (x - center[0])**2)) + center[1]
+        y2 = -np.sqrt(abs(r**2 - (x - center[0])**2)) + center[1]
+        plt.plot(x, y1, c)
+        plt.plot(x, y2, c)
+
+def show_single_area(area,new_points=[],circle_c='k',minlabel=None,majlabel=None):
+    
+    if minlabel == None and majlabel ==None:
+        minlabel,majlabel = G.get_label_in_areas(area)
+
+    min_neighbor = area.nearest_neighbor[area.nearest_neighbor_label == minlabel]
+    maj_neighbor = area.nearest_neighbor[area.nearest_neighbor_label == majlabel]
+    plt.scatter(min_neighbor[:,0],min_neighbor[:,1],marker='*',c='blue',label = 'minority neighbors')
+    plt.scatter(maj_neighbor[:,0],maj_neighbor[:,1],marker='.',c='k',label = 'majority neighbors')
+
+    plt.scatter(area.rep_point[0],area.rep_point[1],c='black',marker='x',label = 'rep_points')
+    if len(new_points) > 0:
+        plt.scatter(new_points[:,0],new_points[:,1],marker = '$\heartsuit$',c = 'red',label = 'synthetic samples',alpha = 0.5)
+    draw_cycle(area.rep_point,area.radius,c=circle_c)
 
 
 def show_oversampling(X,y,X_oversampled,y_oversampled):

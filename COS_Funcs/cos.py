@@ -53,6 +53,7 @@ COS(X,y,N,c,alpha,shrink_half,expand_half,all_safe_weight,minlabel,majlabel,visu
 
 from . import cure
 from . import visualize as V
+from . import generate as G
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -74,10 +75,10 @@ def get_labels(y):
     Only works well on binary dataset as yet
     return minlabel,int(majlabel)
     '''
-    valuecounts = pd.Series(y).value_counts().index
-    majlabel = valuecounts[0]
-    minlabel = valuecounts[1:]
-    if len(minlabel) == 1:
+    valuecounts=pd.Series(y).value_counts().index
+    majlabel=valuecounts[0]
+    minlabel=valuecounts[1:]
+    if len(minlabel)==1:
         minlabel=int(minlabel[0])
     return minlabel,int(majlabel)
 
@@ -110,7 +111,17 @@ class Area():
         '''
         self.nearest_neighbor.append(data)
         self.nearest_neighbor_index.append(index)
-        self.nearest_neighbor_label.append(int(label))
+        self.nearest_neighbor_label.append(label)
+
+
+    def neighbor_toarray(self):
+        '''
+        Would be call when finish generating the safe area, for convert the lists to array
+        '''
+        self.nearest_neighbor = np.array(self.nearest_neighbor)
+        self.nearest_neighbor_index = np.array(self.nearest_neighbor_index)
+        self.nearest_neighbor_label = np.array(self.nearest_neighbor_label)
+
 
     def del_neighbor(self):
         '''
@@ -205,6 +216,7 @@ class Area():
         # Here we didn't consider about 3 max_all_safe 4 max_half_safe, we can add it if needed
 
         self.renew_paras(safe)
+        self.neighbor_toarray()
 
 
 def safe_areas(X,all_reps,y,minlabel=None,majlabel=None,k=3,shrink_half=False,expand_half=False):
@@ -234,19 +246,6 @@ def safe_areas(X,all_reps,y,minlabel=None,majlabel=None,k=3,shrink_half=False,ex
     return areas,min_all_safe_area,min_half_safe_area
 
 
-def MySmote(rep_point,X,num):
-    '''
-    A self defined SMOTE function which is given a representative point and its safe area(neighbors), generate new points on the range(line) from the rep_point to neighbors.
-    '''
-    # Consider generate new points along the line of rep ----- points or rep's any direction in the radius?
-    
-    new_points=[]
-    for i in range(num):
-        index=np.random.randint(0,len(X))
-        new_points.append(rep_point+np.random.rand()*(X[index]-rep_point))
-    return np.array(new_points)
-
-
 def calc_num(min_all_safe_area,min_half_safe_area,minlabel):
     '''
     Calculate how many minority class' neighbors in total of all the all_safe_area and all the half_safe_area
@@ -262,13 +261,12 @@ def calc_num(min_all_safe_area,min_half_safe_area,minlabel):
         num_n_min_half_safe += num_neighbor 
     return num_n_min_all_safe,num_n_min_half_safe
 
-
+    
 def calc_weight(total_num,min_all_safe_area,min_half_safe_area,all_safe_weight):
     '''
     Calculate the weighted number of new points for all safe area and half safe area
     Error will be reported when there is neither all safe area nor half safe area
     Commonly (no error case) w_all +  w_half = 1
-
     '''
     num_min_all_safe = len(min_all_safe_area)
     num_min_half_safe = len(min_half_safe_area)
@@ -290,58 +288,104 @@ def calc_weight(total_num,min_all_safe_area,min_half_safe_area,all_safe_weight):
     total_num_all = math.ceil(total_num * w_all)
     total_num_half = total_num - total_num_all
     
-    return total_num_all,total_num_half
+    return total_num_all,total_num_half 
+    
 
-
-def generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_num_half,num_n_min_all,num_n_min_half,minlabel,all_safe_weight,IR,show=False):
+def generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_num_half,num_n_min_all,num_n_min_half,all_safe_weight,IR,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,minlabel=None,show=False):
     '''
     Return all generated synthetic points in all safe area and half safe area
     '''
+    if minlabel == None:
+        minlabel,_ = get_labels(y)
+    
     if show == True:
         print(f"IR is {IR},need to generate {total_num} synthetic points, all safe weight is {all_safe_weight}")
         print(f"There are in total {len(min_all_safe_area)} all safe area, {len(min_half_safe_area)} half safe area")
         print(f"So generate ({all_safe_weight}*{len(min_all_safe_area)})/({all_safe_weight}*{len(min_all_safe_area)}+{len(min_half_safe_area)})={total_num_all} in all safe areas,{len(min_half_safe_area)}/({all_safe_weight}*{len(min_all_safe_area)}+{len(min_half_safe_area)})={total_num_half} in half safe areas")
+    
+    new_points = []
+    for areas in [min_all_safe_area,min_half_safe_area]:
+        if areas == min_all_safe_area:
+            gen = all_safe_gen
+            area_name = 'all safe area'
+            total_num = total_num_all
+            num_n = num_n_min_all
+
+        elif areas == min_half_safe_area:
+            gen = half_safe_gen
+            area_name = 'half safe area'
+            total_num = total_num_half
+            num_n = num_n_min_half
         
-    new_points_all = []
-    for area in min_all_safe_area:
-        gen_num = int(total_num_all*(area.num_neighbor/num_n_min_all))
-        new_points_all += list(MySmote(area.rep_point,area.nearest_neighbor,gen_num))
-        if show == True:
-            print(f"{area.num_neighbor} neighbors in current area, so generate {total_num_all}*{area.num_neighbor}/{num_n_min_all}={gen_num} points around all safe area of rep point {area.rep_point}")
-    area_iter = itertools.cycle(min_all_safe_area)
-    while (len(new_points_all)<total_num_all):
-        area = next(area_iter)
-        new_points_all += list(MySmote(area.rep_point,area.nearest_neighbor,1))
-        if show == True:
-            print(f"generate 1 points around all safe area of rep point {area.rep_point}")
+        if len(areas) == 0:
+            continue
+
+        counter = 0
+
+        for area in areas:
+            neighbor = np.array(area.nearest_neighbor)
+            label = np.array(area.nearest_neighbor_label)
+            num_neighbor = len(neighbor[label==minlabel])   
+            gen_num = int(total_num*(num_neighbor/num_n))
             
-    new_points_half = []
-    for area in min_half_safe_area:
-        neighbor = np.array(area.nearest_neighbor)
-        label = np.array(area.nearest_neighbor_label)
-        num_neighbor = len(neighbor[label==minlabel])
-        gen_num = int(total_num_half*(num_neighbor/num_n_min_half))
-        new_points_half += list(MySmote(area.rep_point,neighbor[label==minlabel],gen_num))
-        if show == True:
-            print(f'{num_neighbor} minority class neighbors in current area, so generate {total_num_half}*{num_neighbor}/{num_n_min_half}={gen_num} points around half safe area of  rep point {area.rep_point}')
-    area_iter = itertools.cycle(min_half_safe_area)
-    while (len(new_points_half)<total_num_half):
-        area = next(area_iter)
-        neighbor = np.array(area.nearest_neighbor)
-        label = np.array(area.nearest_neighbor_label)
-        new_points_half += list(MySmote(area.rep_point,neighbor[label==minlabel],1))
-        if show == True:
-            print(f"generate 1 points around half safe area of rep point {area.rep_point}")
 
-    if len(new_points_all) == 0:
-        return new_points_half
-    elif len(new_points_half) == 0:
-        return new_points_all
+            para = G.check_parameter(half_safe_gen,minlabel,Gaussian_scale)
+            new_points += list(gen(area,gen_num))
+            counter += gen_num
 
-    return np.vstack((new_points_all,new_points_half))
+            if show == True:
+                print(f"{num_neighbor} minority neighbors in current area, so generate {gen_num} points around "+ area_name +F" of rep point {area.rep_point}")
+        
+        area_iter = itertools.cycle(areas)
+        while counter < total_num:
+            area = next(area_iter)
+            new_points += list(gen(area,1))
+            counter += 1 
+            if show == True:
+                print(f"generate 1 points around "+ area_name +F" of rep point {area.rep_point}")
+
+    return np.array(new_points)
+
+    # new_points_all = []
+    # for area in min_all_safe_area:
+    #     gen_num = int(total_num_all*(area.num_neighbor/num_n_min_all))
+    #     new_points_all += list(MySmote(area.rep_point,area.nearest_neighbor,gen_num))
+    #     if show == True:
+    #         print(f"{area.num_neighbor} neighbors in current area, so generate {total_num_all}*{area.num_neighbor}/{num_n_min_all}={gen_num} points around all safe area of rep point {area.rep_point}")
+    # area_iter = itertools.cycle(min_all_safe_area)
+    # while (len(new_points_all)<total_num_all):
+    #     area = next(area_iter)
+    #     new_points_all += list(MySmote(area.rep_point,area.nearest_neighbor,1))
+    #     if show == True:
+    #         print(f"generate 1 points around all safe area of rep point {area.rep_point}")
+            
+    # new_points_half = []
+    # for area in min_half_safe_area:
+    #     neighbor = np.array(area.nearest_neighbor)
+    #     label = np.array(area.nearest_neighbor_label)
+    #     num_neighbor = len(neighbor[label==minlabel])
+    #     gen_num = int(total_num_half*(num_neighbor/num_n_min_half))
+    #     new_points_half += list(MySmote(area.rep_point,neighbor[label==minlabel],gen_num))
+    #     if show == True:
+    #         print(f'{num_neighbor} minority class neighbors in current area, so generate {total_num_half}*{num_neighbor}/{num_n_min_half}={gen_num} points around half safe area of  rep point {area.rep_point}')
+    # area_iter = itertools.cycle(min_half_safe_area)
+    # while (len(new_points_half)<total_num_half):
+    #     area = next(area_iter)
+    #     neighbor = np.array(area.nearest_neighbor)
+    #     label = np.array(area.nearest_neighbor_label)
+    #     new_points_half += list(MySmote(area.rep_point,neighbor[label==minlabel],1))
+    #     if show == True:
+    #         print(f"generate 1 points around half safe area of rep point {area.rep_point}")
+
+    # if len(new_points_all) == 0:
+    #     return new_points_half
+    # elif len(new_points_half) == 0:
+    #     return new_points_all
+
+    # return np.vstack((new_points_all,new_points_half))
 
 
-def oversampling(X,y,min_all_safe_area,min_half_safe_area,minlabel=None,majlabel=None,all_safe_weight=2,IR=1,show=False):
+def oversampling(X,y,min_all_safe_area,min_half_safe_area,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,minlabel=None,majlabel=None,all_safe_weight=2,IR=1,show=False):
     '''
     Do the oversampling on all the safe areas 
     X: data
@@ -353,7 +397,6 @@ def oversampling(X,y,min_all_safe_area,min_half_safe_area,minlabel=None,majlabel
     all_safe_weight: the safe area's weight, the half safe area's weight is always 1, we just set the all safe area's weight is enough to control the ratio, by default 2
     show: show the generating process, by default False
     '''
-    
     if all_safe_weight == None:
         all_safe_weight = 2
         
@@ -372,13 +415,7 @@ def oversampling(X,y,min_all_safe_area,min_half_safe_area,minlabel=None,majlabel
     # How many points will be generate in all/half safe areas
     total_num_all,total_num_half = calc_weight(total_num,min_all_safe_area,min_half_safe_area,all_safe_weight)
     
-    generated_points = generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_num_half,num_n_min_all,num_n_min_half,minlabel,all_safe_weight,IR,show=show)
-    
-    #flatten the newpoints
-#     generated_points=[]
-#     for i in new_points:
-#         for j in i:
-#             generated_points.append(j)
+    generated_points = generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_num_half,num_n_min_all,num_n_min_half,all_safe_weight,IR,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen,Gaussian_scale=Gaussian_scale,minlabel=minlabel,show=show)
    
     X_generated = np.vstack((X,generated_points))
     new_y = np.ones(len(generated_points))
@@ -388,7 +425,7 @@ def oversampling(X,y,min_all_safe_area,min_half_safe_area,minlabel=None,majlabel
     return X_generated,y_generated
 
 
-def COS(X,y,N,c,alpha,shrink_half=False,expand_half=False,all_safe_weight=2,minlabel=None,majlabel=None,visualize=False):
+def COS(X,y,N,c,alpha,shrink_half=False,expand_half=False,all_safe_weight=2,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,minlabel=None,majlabel=None,visualize=False):
     '''
     CURE(clustering and getting the representative points) -->
     safe area(Generate the safe areas aroung all the representative points) -->
@@ -401,6 +438,9 @@ def COS(X,y,N,c,alpha,shrink_half=False,expand_half=False,all_safe_weight=2,minl
     shrink_half: if true it will try to shrink the half safe area to exclude the furthest majority class's point out of its neighbor until there is no change, default false 
     expand_half: if true it will try to expand the half safe area to contain more the nearest minority class's point into its neighbor until there is no chang, default false 
     all_safe_weight: the safe area's weight, the half safe area's weight is always 1, we just set the all safe area's weight is enough to control the ratio, by default 2
+    all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None
+
+
     minlabel,majlabel: given the label of minority class and majority class, if None will be set from the dataset automatically (only work in binary classification case)
     visualize: show the COS process, by default False
     '''
@@ -411,11 +451,8 @@ def COS(X,y,N,c,alpha,shrink_half=False,expand_half=False,all_safe_weight=2,minl
         V.show_clusters(clusters)
         print('Safe areas:')
         V.show_areas(X,y,min_all_safe_area,min_half_safe_area)
-    
-    # num_min_all,num_min_half = len(min_all_safe_area),len(min_half_safe_area)
-    # X_generated,y_generated = oversampling(X,y,areas,num_min_all,num_min_half,minlabel=minlabel,majlabel=majlabel,all_safe_weight=all_safe_weight,show=visualize)
 
-    X_generated,y_generated = oversampling(X,y,min_all_safe_area,min_half_safe_area,minlabel=minlabel,majlabel=majlabel,all_safe_weight=all_safe_weight,show=visualize)
+    X_generated,y_generated = oversampling(X,y,min_all_safe_area,min_half_safe_area,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen,Gaussian_scale=Gaussian_scale,minlabel=minlabel,majlabel=majlabel,all_safe_weight=all_safe_weight,IR=IR,show=visualize)
 
     if visualize == True:
         print('Generated dataset:') 

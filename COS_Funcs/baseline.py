@@ -2,6 +2,7 @@ from sklearn import metrics
 import COS_Funcs.metrics as M
 import COS_Funcs.visualize as V
 import COS_Funcs.cos as cos
+import COS_Funcs.generate as G
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -12,7 +13,6 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
-
 
 from smote_variants import (DBSMOTE,DSMOTE,SMOTE_D,CURE_SMOTE,kmeans_SMOTE,SOMO,NRAS,SYMPROD)
 from dtosmote.dto_smote import DTO
@@ -31,7 +31,8 @@ datasets = ['Sampledata_new_1','Sampledata_new_2','Sampledata1','yeast','pima-in
 
 
 models = ['original','smote','db_smote'
-        #   ,'smote_d','cure_smote','kmeans_smote'
+        #   ,'smote_d'
+          ,'cure_smote','kmeans_smote'
         #   ,'adasyn','somo','symprod'
           ,'cos'] #Donia
         # 'smote_enn','smote_tl','d_smote','nras' was moved
@@ -59,6 +60,10 @@ def calc_score(metric,y_test,y_pred,pos_label):
     
     elif metric == 'kappa':
         return metrics.cohen_kappa_score(y_test,y_pred)
+    
+    elif metric == 'auc':
+        # Put the auc here when getting what it is 
+        return None
     
     elif metric == 'accuracy':
         return metrics.accuracy_score(y_test,y_pred)
@@ -128,8 +133,8 @@ def oversampling(model,X_train,y_train,*args): # !!!! Donia
         return delaunay.fit_resample(X_train,y_train)
     
     elif model == 'cos':
-        N,c,alpha,shrink_half,expand_half,all_safe_weight,minlabel,majlabel,visualize = get_cos_para(args[0])
-        return cos.COS(X_train,y_train,N,c,alpha,shrink_half,expand_half,all_safe_weight,minlabel,majlabel,visualize)
+        N,c,alpha,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize = get_cos_para(args[0])
+        return cos.COS(X_train,y_train,N,c,alpha,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize)
     
     else:
         return 0
@@ -207,6 +212,26 @@ def get_cos_para(args):
     else:
         all_safe_weight = 2
 
+    if 'all_safe_gen' in args.keys():
+        all_safe_gen = args['all_safe_gen']
+    else:
+        all_safe_gen=G.Smote_Generator
+        
+    if 'half_safe_gen' in args.keys():
+        half_safe_gen = args['half_safe_gen']
+    else:
+        half_safe_gen=G.Smote_Generator   
+
+    if 'gaussian_scale' in args.keys():
+        Gaussian_scale = args['gaussian_scale']
+    else:
+        Gaussian_scale = 0.8  
+
+    if 'ir' in args.keys():
+        IR = args['ir']
+    else:
+        IR=1
+
     if 'minlabel' in args.keys():
         minlabel = args['minlabel']
     else:
@@ -222,7 +247,7 @@ def get_cos_para(args):
     else:
         visualize = False
 
-    return N,c,alpha,shrink_half,expand_half,all_safe_weight,minlabel,majlabel,visualize
+    return N,c,alpha,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize
 
 
 def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,show_folds=False,**args):
@@ -246,7 +271,7 @@ def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,sho
         scores_df = pd.DataFrame(columns=models,index=datasets)
         
         for dataset in datasets: 
-            # print(dataset+":")
+
             scores = [] 
 
             for model in models:
@@ -329,4 +354,3 @@ def show_baseline_cos(dataset,random_state=None,pos_label=None,**args):
     X_oversampled,y_oversampled = oversampling(model,X_train,y_train,args['args'])
 
     plt.show()
-
