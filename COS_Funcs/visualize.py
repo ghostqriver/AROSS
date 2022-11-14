@@ -30,7 +30,7 @@ def show_clusters(clusters):
     Show the scatter for a 2d dataset's cluster result
     clusters: the cluster object list from the CURE
     '''
-    plt.figure(figsize=(10,10))
+    # plt.figure(figsize=(10,10))
     color_list = list(color_dict.keys())
     mod_ = len(color_list)
     for ind,cluster in enumerate(clusters):
@@ -40,7 +40,7 @@ def show_clusters(clusters):
         plt.scatter(points[:,0],points[:,1],marker='.',c=color_list[c_ind])
         plt.scatter(rep_points[:,0],rep_points[:,1],marker='x',c=color_list[c_ind])
     plt.title('clusters')
-    plt.show()
+    # plt.show()
 
 
 def show_rep_points(X,y,clusters):
@@ -207,7 +207,6 @@ def show_cos(X,y,X_oversampled,y_oversampled,min_all_safe_area,min_half_safe_are
 
 color_dict = {
             'black':                '#000000',
-            'blanchedalmond':       '#FFEBCD',
             'blue':                 '#0000FF',
             'blueviolet':           '#8A2BE2',
             'brown':                '#A52A2A',
@@ -249,7 +248,6 @@ color_dict = {
             'gray':                 '#808080',
             'green':                '#008000',
             'greenyellow':          '#ADFF2F',
-            'honeydew':             '#F0FFF0',
             'hotpink':              '#FF69B4',
             'indianred':            '#CD5C5C',
             'indigo':               '#4B0082',
@@ -258,7 +256,6 @@ color_dict = {
             'lemonchiffon':         '#FFFACD',
             'lime':                 '#00FF00',
             'limegreen':            '#32CD32',
-            'linen':                '#FAF0E6',
             'magenta':              '#FF00FF',
             'maroon':               '#800000',
             'mediumaquamarine':     '#66CDAA',
@@ -271,11 +268,9 @@ color_dict = {
             'mediumturquoise':      '#48D1CC',
             'mediumvioletred':      '#C71585',
             'midnightblue':         '#191970',
-            'mintcream':            '#F5FFFA',
             'mistyrose':            '#FFE4E1',
             'moccasin':             '#FFE4B5',
             'navy':                 '#000080',
-            'oldlace':              '#FDF5E6',
             'olive':                '#808000',
             'olivedrab':            '#6B8E23',
             'orange':               '#FFA500',
@@ -312,6 +307,5 @@ color_dict = {
             'tomato':               '#FF6347',
             'turquoise':            '#40E0D0',
             'violet':               '#EE82EE',
-            'wheat':                '#F5DEB3',
             'yellow':               '#FFFF00'
             }

@@ -32,9 +32,9 @@ datasets = ['Sampledata_new_1','Sampledata_new_2','Sampledata1','yeast','pima-in
 
 models = ['original','smote','db_smote'
         #   ,'smote_d'
-          ,'cure_smote','kmeans_smote'
+        ,'cure_smote','kmeans_smote'
         #   ,'adasyn','somo','symprod'
-          ,'cos'] #Donia
+          ,'cos'] 
         # 'smote_enn','smote_tl','d_smote','nras' was moved
         # 'dto_smote' can not worked on 'Sampledata1'
 
@@ -133,8 +133,8 @@ def oversampling(model,X_train,y_train,*args): # !!!! Donia
         return delaunay.fit_resample(X_train,y_train)
     
     elif model == 'cos':
-        N,c,alpha,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize = get_cos_para(args[0])
-        return cos.COS(X_train,y_train,N,c,alpha,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize)
+        N,c,alpha,L,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize = get_cos_para(args[0])
+        return cos.COS(X_train,y_train,N,c,alpha,L,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize)
     
     else:
         return 0
@@ -197,6 +197,11 @@ def get_cos_para(args):
     N = args['N']
     alpha = args['alpha']
 
+    if 'l' in args.keys():
+        L = args['l']
+    else:
+        L = 2
+
     if 'shrink_half' in args.keys():
         shrink_half = args['shrink_half']
     else:
@@ -247,7 +252,7 @@ def get_cos_para(args):
     else:
         visualize = False
 
-    return N,c,alpha,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize
+    return N,c,alpha,L,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize
 
 
 def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,show_folds=False,**args):
@@ -272,6 +277,7 @@ def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,sho
         
         for dataset in datasets: 
 
+            print(dataset)
             scores = [] 
 
             for model in models:
@@ -311,8 +317,15 @@ def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,sho
     return avg_scores_df
 
 
-def show_baseline(dataset,random_state=None,pos_label=None,**args):
+def show_baseline(dataset,random_state=None,pos_label=None,img_name=None,**args):
     
+    path = 'baselines/'
+    check_dir(path)
+
+    if img_name == None:
+        version = time.strftime('%m%d_%H%M%S')
+        img_name = 'baseline_'+version+'.png'
+
     num_models = len(models)
     num_columns = 4
     num_rows = math.ceil(num_models/num_columns)
@@ -334,7 +347,7 @@ def show_baseline(dataset,random_state=None,pos_label=None,**args):
         
         V.show_oversampling(X_train,y_train,X_oversampled,y_oversampled)
         plt.title(model)
-    
+    plt.savefig(path+img_name)
     plt.show()
 
 

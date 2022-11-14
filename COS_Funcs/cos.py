@@ -346,55 +346,21 @@ def generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_
 
     return np.array(new_points)
 
-    # new_points_all = []
-    # for area in min_all_safe_area:
-    #     gen_num = int(total_num_all*(area.num_neighbor/num_n_min_all))
-    #     new_points_all += list(MySmote(area.rep_point,area.nearest_neighbor,gen_num))
-    #     if show == True:
-    #         print(f"{area.num_neighbor} neighbors in current area, so generate {total_num_all}*{area.num_neighbor}/{num_n_min_all}={gen_num} points around all safe area of rep point {area.rep_point}")
-    # area_iter = itertools.cycle(min_all_safe_area)
-    # while (len(new_points_all)<total_num_all):
-    #     area = next(area_iter)
-    #     new_points_all += list(MySmote(area.rep_point,area.nearest_neighbor,1))
-    #     if show == True:
-    #         print(f"generate 1 points around all safe area of rep point {area.rep_point}")
-            
-    # new_points_half = []
-    # for area in min_half_safe_area:
-    #     neighbor = np.array(area.nearest_neighbor)
-    #     label = np.array(area.nearest_neighbor_label)
-    #     num_neighbor = len(neighbor[label==minlabel])
-    #     gen_num = int(total_num_half*(num_neighbor/num_n_min_half))
-    #     new_points_half += list(MySmote(area.rep_point,neighbor[label==minlabel],gen_num))
-    #     if show == True:
-    #         print(f'{num_neighbor} minority class neighbors in current area, so generate {total_num_half}*{num_neighbor}/{num_n_min_half}={gen_num} points around half safe area of  rep point {area.rep_point}')
-    # area_iter = itertools.cycle(min_half_safe_area)
-    # while (len(new_points_half)<total_num_half):
-    #     area = next(area_iter)
-    #     neighbor = np.array(area.nearest_neighbor)
-    #     label = np.array(area.nearest_neighbor_label)
-    #     new_points_half += list(MySmote(area.rep_point,neighbor[label==minlabel],1))
-    #     if show == True:
-    #         print(f"generate 1 points around half safe area of rep point {area.rep_point}")
-
-    # if len(new_points_all) == 0:
-    #     return new_points_half
-    # elif len(new_points_half) == 0:
-    #     return new_points_all
-
-    # return np.vstack((new_points_all,new_points_half))
-
 
 def oversampling(X,y,min_all_safe_area,min_half_safe_area,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,minlabel=None,majlabel=None,all_safe_weight=2,IR=1,show=False):
     '''
-    Do the oversampling on all the safe areas 
+    Do the oversampling on safe areas 
     X: data
     y: label
     areas: the all Area instances list returned by cos.safe_areas() functions
     min_all_safe_area: the all safe Area instances list returned by cos.safe_areas() functions
     min_half_safe_area:  the all safe Area instances list returned by cos.safe_areas() functions
+    all_safe_gen: the generator will be used in the all safe area, by defalut SMOTE, you can set it to any generator function from generate.py
+    all_half_gen: the generator will be used in the half safe area, by defalut SMOTE, you can set it to any generator function from generate.py
+    Gaussian_scale: the scale/standard deviation of Gaussian_Generator
     minlabel,majlabel: given the label of minority class and majority class, if None will be set from the dataset automatically (only work in binary classification case)
     all_safe_weight: the safe area's weight, the half safe area's weight is always 1, we just set the all safe area's weight is enough to control the ratio, by default 2
+    IR: the expected imbalance ratio after the oversampling, by default 1
     show: show the generating process, by default False
     '''
     if all_safe_weight == None:
@@ -417,34 +383,42 @@ def oversampling(X,y,min_all_safe_area,min_half_safe_area,all_safe_gen=G.Smote_G
     
     generated_points = generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_num_half,num_n_min_all,num_n_min_half,all_safe_weight,IR,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen,Gaussian_scale=Gaussian_scale,minlabel=minlabel,show=show)
    
-    X_generated = np.vstack((X,generated_points))
     new_y = np.ones(len(generated_points))
     new_y = new_y * minlabel
-    y_generated = np.hstack((y,new_y))
     
+    if len(generated_points) > 0 :
+        X_generated = np.vstack((X,generated_points))
+        y_generated = np.hstack((y,new_y))
+    else:
+        X_generated = X
+        y_generated = y
+        
     return X_generated,y_generated
 
 
-def COS(X,y,N,c,alpha,shrink_half=False,expand_half=False,all_safe_weight=2,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,minlabel=None,majlabel=None,visualize=False):
+def COS(X,y,N,c,alpha,L=2,shrink_half=False,expand_half=False,all_safe_weight=2,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,minlabel=None,majlabel=None,visualize=False):
     '''
     CURE(clustering and getting the representative points) -->
-    safe area(Generate the safe areas aroung all the representative points) -->
+    safe area(Generate the safe areas around all the representative points) -->
     oversampling(Generate new points in safe areas)
+
     X: data
     y: label
     N: num_expected_clusters,how many clusters you want
     c: number of representative points in each cluster
-    alpha: the given shrink parameter, the bigger alpha is the closer the representative to the centroid
+    alpha: the given shrink parameter, the bigger alpha is the closer the representative points to the centroid of the cluster
+    L: the distance metric will be used in CURE, L=1 the Manhattan distance, L=2 the Euclidean distance, by default L=2
     shrink_half: if true it will try to shrink the half safe area to exclude the furthest majority class's point out of its neighbor until there is no change, default false 
     expand_half: if true it will try to expand the half safe area to contain more the nearest minority class's point into its neighbor until there is no chang, default false 
     all_safe_weight: the safe area's weight, the half safe area's weight is always 1, we just set the all safe area's weight is enough to control the ratio, by default 2
-    all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None
-
-
+    all_safe_gen: the generator will be used in the all safe area, by defalut SMOTE, you can set it to any generator function from generate.py
+    all_half_gen: the generator will be used in the half safe area, by defalut SMOTE, you can set it to any generator function from generate.py
+    Gaussian_scale: the scale/standard deviation of Gaussian_Generator
+    IR: the expected imbalance ratio after the oversampling, by default 1
     minlabel,majlabel: given the label of minority class and majority class, if None will be set from the dataset automatically (only work in binary classification case)
     visualize: show the COS process, by default False
     '''
-    clusters,all_reps,num_reps = cure.Cure(X,N,c,alpha)
+    clusters,all_reps,num_reps = cure.Cure(X,N,c,alpha,L=L)
     areas,min_all_safe_area,min_half_safe_area = safe_areas(X,all_reps,y,minlabel=minlabel,majlabel=majlabel,shrink_half=shrink_half,expand_half=expand_half) 
     if visualize == True:
         print('Clusters:')
