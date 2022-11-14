@@ -299,6 +299,5 @@ color_dict = {
             'tomato':               '#FF6347',
             'turquoise':            '#40E0D0',
             'violet':               '#EE82EE',
-            'wheat':                '#F5DEB3',
             'yellow':               '#FFFF00'
             }

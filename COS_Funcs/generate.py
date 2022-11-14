@@ -45,24 +45,32 @@ def Smote_Generator(area,num,*minlabel):
     return np.array(new_points)
 
 
+def Gaussian_Step(area,radius_new,num,scale):
+    
+    new_points = []
+    for i in range(num):
+        ratio = np.random.normal(scale=scale,size = len(area.rep_point))
+        # To ensure the ratio should in the range [-1,1]
+        while (ratio>1).any() or (ratio<-1).any():
+            ratio = np.random.normal(scale=scale,size = len(area.rep_point))
+        new_points.append(area.rep_point + radius_new * ratio)
+    return new_points
+
+
 def Gaussian_Generator(area,num,*scale):
     '''
 
     '''
+    new_points = []
+    radius_new = np.sqrt(2) * area.radius /2 
     if len(scale) == 0:
-        scale=0.8
+        scales = [0.1,0.3,0.9]
+        num0 = int(num/3)
+        nums = [num0,num0,num-2*num0]
+        for scale,num in zip(scales,nums):
+            new_points += Gaussian_Step(area,radius_new,num,scale)
     else:
         scale = scale[0]
-        
-    new_points=[]
-    radius_new = np.sqrt(2) * area.radius /2 
-    for i in range(num):
-        ratio = np.random.normal(scale=scale,size = len(area.rep_point))
-
-        # To ensure the ratio should in the range [-1,1]
-        while (ratio>1).any() or (ratio<-1).any():
-            ratio = np.random.normal(scale=scale,size = len(area.rep_point))
-        
-        new_points.append(area.rep_point + radius_new * ratio)
-
+        new_points = Gaussian_Step(area,radius_new,num,scale)
+    
     return np.array(new_points)

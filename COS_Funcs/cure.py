@@ -36,15 +36,17 @@ import time,os
 from . import visualize as V
 
 
-def calc_dist(vecA, vecB):
+def calc_dist(vecA, vecB, L=2):
     '''
     Calculate the distance between points
-    also can be implenmented using scipy.spatial.distance.pdist((vecA, vecB)),'euclidean')
+    also can be implenmented using scipy.spatial.distance.pdist((vecA,vecB),'minkowski',p=1)/scipy.spatial.distance.pdist((vecA, vecB),'euclidean')
     Because when there is no string type feature this function can now work, but if there is, then we need to consider what is the distance between 0 and 3 which should be 1 but not 3 and some times 1 is too big for our dataset
-    
+    L: L=1 the Manhattan distance, L=2 the Euclidean distance, by default L=2.
     '''
-    return np.sqrt(np.power(vecA - vecB, 2).sum())
-
+    if L ==1 : 
+        return np.abs(vecA - vecB).sum()
+    else :
+        return np.sqrt(np.power(vecA - vecB, 2).sum())
 
 class Cluster:
     '''
@@ -94,7 +96,7 @@ class Cluster:
         '''
         self.rep_points = tmp_repset + alpha * (self.center - tmp_repset) # in np.array self.center - tmp_repset will be calculate as [self.center-tmp_repset[0],self.center-tmp_repset[1],self.center-tmp_repset[2]....]
     
-    def merge(self,another_cluster,c,alpha):
+    def merge(self,another_cluster,c,alpha,L):
         '''
         Merge two cluster into one,
         firstly renew the parameters and center,
@@ -112,10 +114,10 @@ class Cluster:
                 maxDist = 0
                 for p in self.points:
                     if i==0:
-                        minDist = calc_dist(p,self.center)
+                        minDist = calc_dist(p,self.center,L)
                     else:
                         # for a given p, if p's min distance to any q in tmpset is biggest, then p is next representative point 
-                        minDist = np.min([calc_dist(p,q) for q in tmpSet])
+                        minDist = np.min([calc_dist(p,q,L) for q in tmpSet])
                     if minDist >= maxDist:
                         maxPoint = p
                         maxDist = minDist
@@ -123,7 +125,7 @@ class Cluster:
         self.add_shrink(tmpSet,alpha)
         
         
-    def rep_dist(self,another_cluster):
+    def rep_dist(self,another_cluster,L):
         '''
         Calculate the minimum distance between representative points between two clusters
         c*c times running, if use a kdtree it can save a bit time, but due to c is always very small we consider this later
@@ -131,7 +133,7 @@ class Cluster:
         min_dist=float('inf')
         for i in self.rep_points:
             for j in another_cluster.rep_points:
-                dist_i = calc_dist(i,j)
+                dist_i = calc_dist(i,j,L)
                 if dist_i < min_dist:
                     min_dist = dist_i
         return min_dist
@@ -174,17 +176,17 @@ class dist_matrix():
     The object of distance matrix during the CURE algorithm running
     .matrix    : the nxn distance matrix, n is the number of clusters in this iteratio
     '''
-    def __init__(self,X):
+    def __init__(self,X,L):
         self.matrix = np.zeros([len(X),len(X)])
-        self.gen_matrix(X)
+        self.gen_matrix(X,L)
         
-    def gen_matrix(self,X):
+    def gen_matrix(self,X,L):
         for i in range(self.matrix.shape[0]):
             for j in range(self.matrix.shape[1]):
                 if i>=j:
                     self.matrix[i][j]=float('inf')
                 else:
-                    self.matrix[i][j]=calc_dist(X[i],X[j])  
+                    self.matrix[i][j]=calc_dist(X[i],X[j],L)  
                     
     def nearest_neighbor(self):
         min_dist = np.min(self.matrix)
@@ -193,13 +195,15 @@ class dist_matrix():
         neighbor2 = neighbors[1][0]      
         return (neighbor1,neighbor2,min_dist)
       
-    def renew_matrix(self,clusters,neighbor1,neighbor2):
+    def renew_matrix(self,clusters,neighbor1,neighbor2,L):
         '''
-        Change the distance matrix information, calculate the distance use the reoresentative pts
+        Change the distance matrix information, calculate the distance use the representative pts
         '''
         for i in range(self.matrix.shape[0]):
+            if i < neighbor1:
+                self.matrix[i,neighbor1] = clusters[neighbor1].rep_dist(clusters[i],L)
             if i > neighbor1:
-                self.matrix[neighbor1,i] = clusters[neighbor1].rep_dist(clusters[i])
+                self.matrix[neighbor1,i] = clusters[neighbor1].rep_dist(clusters[i],L)
         self.matrix = np.delete(self.matrix,neighbor2,axis=1)
         self.matrix = np.delete(self.matrix,neighbor2,axis=0)
     
@@ -227,18 +231,19 @@ def visualize_cure(clusters,dist,neighbor1 = None,neighbor2 = None,min_dist = No
     print('-'*60)
     
     
-def Cure(X,num_expected_clusters,c,alpha,visualize = False):
+def Cure(X,num_expected_clusters,c,alpha,L=2,visualize = False):
     '''
     The Cure algorithm, will return clusters,all_reps,num_reps(list of cluster objects,all representative points,number of representative points)
     X: the data
     num_expected_clusters: N, how many clusters you want
     c: number of representative points in each cluster
     alpha: the given shrink parameter, the bigger alpha is the closer the representative to the centroid
+    L: the distance metric, L=1 the Manhattan distance, L=2 the Euclidean distance, by default L=2
     visualize: if set to true, it will show the clusters and distance matrix after each merging, only works for 2d dataset for testing
     '''
     clusters = Cluster.gen_cluster(X)
     
-    dist = dist_matrix(X)
+    dist = dist_matrix(X,L)
     
     num_clusters = len(clusters)
         
@@ -250,9 +255,9 @@ def Cure(X,num_expected_clusters,c,alpha,visualize = False):
         if visualize == True:
             visualize_cure(clusters,dist,neighbor1,neighbor2,min_dist)
             
-        clusters[neighbor1].merge(clusters[neighbor2],c,alpha)
+        clusters[neighbor1].merge(clusters[neighbor2],c,alpha,L)
         
-        dist.renew_matrix(clusters,neighbor1,neighbor2)
+        dist.renew_matrix(clusters,neighbor1,neighbor2,L)
                
         # Drop the unused clusters' informations
         del(clusters[neighbor2])
