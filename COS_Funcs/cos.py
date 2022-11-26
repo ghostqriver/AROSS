@@ -435,4 +435,4 @@ def COS(X,y,N,c,alpha,L=2,shrink_half=False,expand_half=False,all_safe_weight=2,
         print('All:')
         V.show_cos(X,y,X_generated,y_generated,min_all_safe_area,min_half_safe_area,minlabel,majlabel)
 
-    return X_generated,y_generated
+    return X_generated,y_generated,len(min_all_safe_area),len(min_half_safe_area)

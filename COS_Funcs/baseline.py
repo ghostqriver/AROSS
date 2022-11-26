@@ -185,7 +185,7 @@ def check_dir(dir):
         
 
 def gen_df(models,datasets,avg_scores):
-    avg_scores_df = pd.DataFrame(columns=models,index=datasets)
+    avg_scores_df = pd.DataFrame(columns=models+['all safe area','half safe area'],index=datasets)
     for index,i in zip(avg_scores_df.index,range(len(avg_scores))):
         avg_scores_df.loc[index] = avg_scores[i]
     return avg_scores_df
@@ -267,17 +267,21 @@ def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,sho
     check_dir(path)
     
     if excel_name == None:
-        version = time.strftime('%m%d_%H%M%S')
-        excel_name = 'baseline_'+version+'_'+metric+'_'+classification_model+'.xlsx'
+        fn = ''
+        for str_ in [j[0]+str(j[1]) for j in [(i,args['args'][i]) for i in args['args']]]:
+            fn = fn  + str_ +'_'
+        # version = time.strftime('%m%d_%H%M%S')
+        excel_name = fn+metric+'_'+classification_model+'_k'+str(k)+'.xlsx'
+
     writer = pd.ExcelWriter(path+excel_name)
     
     for random_state in range(k):
         
-        scores_df = pd.DataFrame(columns=models,index=datasets)
+        scores_df = pd.DataFrame(columns=models+['all safe area','half safe area'],index=datasets)
         
         for dataset in datasets: 
 
-            print(dataset)
+            # print(dataset)
             scores = [] 
 
             for model in models:
@@ -288,11 +292,18 @@ def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,sho
 
                 pos_label = cos.get_labels(y_test)[0]
 
-                X_train,y_train = oversampling(model,X_train,y_train,args['args']) # Donia
+                if model == 'cos':
+                    X_train,y_train,num_all_safe,num_half_safe = oversampling(model,X_train,y_train,args['args']) # Donia
+                else:
+                    X_train,y_train = oversampling(model,X_train,y_train,args['args']) # Donia
 
                 y_pred = do_classification(X_train,y_train,X_test,classification_model)
 
                 scores.append(calc_score(metric,y_test,y_pred,pos_label))
+
+                if model == 'cos':
+                    scores.append(num_all_safe)
+                    scores.append(num_half_safe)
 
             scores_df.loc[dataset] = scores
         
@@ -313,8 +324,11 @@ def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,sho
     
     avg_scores_df.to_excel(writer,sheet_name= 'avg')
     writer.save()
-    
-    return avg_scores_df
+    print("The scores in each fold stored in",path+excel_name)
+    print("The average scores:")
+    print(avg_scores_df)
+
+    return path+excel_name
 
 
 def show_baseline(dataset,random_state=None,pos_label=None,img_name=None,**args):
@@ -323,8 +337,11 @@ def show_baseline(dataset,random_state=None,pos_label=None,img_name=None,**args)
     check_dir(path)
 
     if img_name == None:
-        version = time.strftime('%m%d_%H%M%S')
-        img_name = 'baseline_'+version+'.png'
+        fn = ''
+        for str_ in [j[0]+str(j[1]) for j in [(i,args['args'][i]) for i in args['args']]]:
+            fn = fn  + str_ +'_'
+        # version = time.strftime('%m%d_%H%M%S')
+        img_name  = fn+dataset+'_k='+str(random_state)+'.png'
 
     num_models = len(models)
     num_columns = 4
@@ -340,14 +357,17 @@ def show_baseline(dataset,random_state=None,pos_label=None,img_name=None,**args)
         X_train,X_test,y_train,y_test = train_test_split(X,y,stratify=y,random_state=random_state)
 
         pos_label = cos.get_labels(y_test)[0]
-
-        X_oversampled,y_oversampled = oversampling(model,X_train,y_train,args['args'])
+        if model == 'cos':
+            X_oversampled,y_oversampled,_,_ = oversampling(model,X_train,y_train,args['args']) 
+        else:
+            X_oversampled,y_oversampled = oversampling(model,X_train,y_train,args['args'])
 
         plt.subplot(num_rows,num_columns,ind+1)
         
         V.show_oversampling(X_train,y_train,X_oversampled,y_oversampled)
         plt.title(model)
     plt.savefig(path+img_name)
+    print("The image stored in",path+img_name)
     plt.show()
 
 
@@ -364,6 +384,6 @@ def show_baseline_cos(dataset,random_state=None,pos_label=None,**args):
 
     pos_label = cos.get_labels(y_test)[0]
 
-    X_oversampled,y_oversampled = oversampling(model,X_train,y_train,args['args'])
+    X_oversampled,y_oversampled,_,_ = oversampling(model,X_train,y_train,args['args'])
 
     plt.show()
