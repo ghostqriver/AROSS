@@ -27,7 +27,7 @@ import math
 
 # Global variables
 dataset_path = 'Dataset/'
-datasets = ['Sampledata_new_1','Sampledata_new_2','Sampledata1','yeast','pima-indians-diabetes','haberman','ecoli2','glass1']
+datasets = ['Sampledata_new_1','Sampledata_new_2','Sampledata_new_3','Sampledata1','yeast','pima-indians-diabetes','haberman','ecoli2','glass1']
 
 
 models = ['original','smote','db_smote'
@@ -133,8 +133,8 @@ def oversampling(model,X_train,y_train,*args): # !!!! Donia
         return delaunay.fit_resample(X_train,y_train)
     
     elif model == 'cos':
-        N,c,alpha,L,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize = get_cos_para(args[0])
-        return cos.COS(X_train,y_train,N,c,alpha,L,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize)
+        N,c,alpha,linkage,L,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize = get_cos_para(args[0])
+        return cos.COS(X_train,y_train,N,c,alpha,linkage,L,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize)
     
     else:
         return 0
@@ -197,6 +197,11 @@ def get_cos_para(args):
     N = args['N']
     alpha = args['alpha']
 
+    if 'linkage' in args.keys():
+        linkage = args['linkage']
+    else:
+        linkage = 'single'
+
     if 'l' in args.keys():
         L = args['l']
     else:
@@ -252,7 +257,7 @@ def get_cos_para(args):
     else:
         visualize = False
 
-    return N,c,alpha,L,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize
+    return N,c,alpha,linkage,L,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize
 
 
 def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,show_folds=False,**args):

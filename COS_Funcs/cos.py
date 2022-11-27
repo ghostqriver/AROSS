@@ -396,7 +396,7 @@ def oversampling(X,y,min_all_safe_area,min_half_safe_area,all_safe_gen=G.Smote_G
     return X_generated,y_generated
 
 
-def COS(X,y,N,c,alpha,L=2,shrink_half=False,expand_half=False,all_safe_weight=2,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,minlabel=None,majlabel=None,visualize=False):
+def COS(X,y,N,c,alpha,linkage='single',L=2,shrink_half=False,expand_half=False,all_safe_weight=2,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,minlabel=None,majlabel=None,visualize=False):
     '''
     CURE(clustering and getting the representative points) -->
     safe area(Generate the safe areas around all the representative points) -->
@@ -407,6 +407,13 @@ def COS(X,y,N,c,alpha,L=2,shrink_half=False,expand_half=False,all_safe_weight=2,
     N: num_expected_clusters,how many clusters you want
     c: number of representative points in each cluster
     alpha: the given shrink parameter, the bigger alpha is the closer the representative points to the centroid of the cluster
+     linkage: the linkage way in CURE
+        if 'single' - calculate a nearest distance using representative points as the distance of two clusters, default value;
+        if 'complete' - calculate a furthest distance using representative points as the distance of two clusters;  
+        if 'average' - calculate a average distance using representative points as the distance of two clusters;
+        if 'centroid' - calculate a distance using centorids as the distance of two clusters; 
+        if 'ward' - calculate the variance if merging two clusters as the distance of two clusters;  
+    L: the distance metric, L=1 the Manhattan distance, L=2 the Euclidean distance, by default L=2
     L: the distance metric will be used in CURE, L=1 the Manhattan distance, L=2 the Euclidean distance, by default L=2
     shrink_half: if true it will try to shrink the half safe area to exclude the furthest majority class's point out of its neighbor until there is no change, default false 
     expand_half: if true it will try to expand the half safe area to contain more the nearest minority class's point into its neighbor until there is no chang, default false 
@@ -418,7 +425,7 @@ def COS(X,y,N,c,alpha,L=2,shrink_half=False,expand_half=False,all_safe_weight=2,
     minlabel,majlabel: given the label of minority class and majority class, if None will be set from the dataset automatically (only work in binary classification case)
     visualize: show the COS process, by default False
     '''
-    clusters,all_reps,num_reps = cure.Cure(X,N,c,alpha,L=L)
+    clusters,all_reps,num_reps = cure.Cure(X,N,c,alpha,linkage=linkage,L=L)
     areas,min_all_safe_area,min_half_safe_area = safe_areas(X,all_reps,y,minlabel=minlabel,majlabel=majlabel,shrink_half=shrink_half,expand_half=expand_half) 
     if visualize == True:
         print('Clusters:')

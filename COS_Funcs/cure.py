@@ -61,7 +61,7 @@ class Cluster:
     renew_paras(self,another_cluster): when merge two cluster together, renew the number of points
     add_shrink(self,tmp_repset,alpha): shrink the representative points to the centroid after the merging
     merge(self,another_cluster,c,alpha): merge two cluster into one
-    rep_dist(self,another_cluster): calculate the minimum distance between representative points between two clusters
+    clus_dist(self,another_cluster): calculate the minimum distance between representative points between two clusters
     
     '''
     def __init__(self,index,point,num = 1):
@@ -125,17 +125,46 @@ class Cluster:
         self.add_shrink(tmpSet,alpha)
         
         
-    def rep_dist(self,another_cluster,L):
+    def clus_dist(self,another_cluster,linkage='single',L=2):
         '''
-        Calculate the minimum distance between representative points between two clusters
-        c*c times running, if use a kdtree it can save a bit time, but due to c is always very small we consider this later
+        Calculate the distance between two clusters
+        linkage: 
+            if 'single' - calculate a nearest distance using representative points as the distance of two clusters, default value;
+            if 'complete' - calculate a furthest distance using representative points as the distance of two clusters;  
+            if 'average' - calculate a average distance using representative points as the distance of two clusters;
+            if 'centroid' - calculate a distance using centorids as the distance of two clusters; 
+            if 'ward' - calculate the variance if merging two clusters as the distance of two clusters;  
+        L: the distance metric, L=1 the Manhattan distance, L=2 the Euclidean distance, by default L=2
         '''
-        min_dist=float('inf')
-        for i in self.rep_points:
-            for j in another_cluster.rep_points:
-                dist_i = calc_dist(i,j,L)
-                if dist_i < min_dist:
-                    min_dist = dist_i
+
+        # min_dist = calc_dist(self.rep_points[0],another_cluster.rep_points[0],L)
+        if linkage == 'centroid':
+            min_dist = calc_dist(self.center,another_cluster.center,L)
+        elif linkage == 'ward':
+            min_dist = np.var(np.vstack([self.points,another_cluster.points]),axis=0).mean() - (np.var(self.points,axis=0) + np.var(another_cluster.points,axis=0)).mean()
+            
+        else:
+            # For average link
+            num_dists = len(self.rep_points) * len(another_cluster.rep_points)
+
+            for ind1,i in enumerate(self.rep_points):
+                for ind2,j in enumerate(another_cluster.rep_points):
+                    
+                    if ind1 == 0 and ind2 == 0:
+                        min_dist = calc_dist(i,j,L)
+                    
+                    dist_i = calc_dist(i,j,L)
+                    
+                    if linkage == 'complete':
+                        if dist_i > min_dist:
+                            min_dist = dist_i
+                    elif linkage == 'average':
+                        if ind1 == 0 and ind2 == 0:
+                            min_dist = 0
+                        min_dist += dist_i/num_dists 
+                    else: # 'single' or others
+                        if dist_i < min_dist:
+                            min_dist = dist_i
         return min_dist
     
     
@@ -176,17 +205,21 @@ class dist_matrix():
     The object of distance matrix during the CURE algorithm running
     .matrix    : the nxn distance matrix, n is the number of clusters in this iteratio
     '''
-    def __init__(self,X,L):
+    def __init__(self,X,linkage,L):
         self.matrix = np.zeros([len(X),len(X)])
-        self.gen_matrix(X,L)
+        self.gen_matrix(X,linkage,L)
         
-    def gen_matrix(self,X,L):
+    def gen_matrix(self,X,linkage,L):
+        
         for i in range(self.matrix.shape[0]):
             for j in range(self.matrix.shape[1]):
                 if i>=j:
                     self.matrix[i][j]=float('inf')
                 else:
-                    self.matrix[i][j]=calc_dist(X[i],X[j],L)  
+                    if linkage=='ward':
+                        self.matrix[i][j] = np.var(np.vstack([X[i],X[j]]),axis=0).mean()
+                    else:
+                        self.matrix[i][j] = calc_dist(X[i],X[j],L)  
                     
     def nearest_neighbor(self):
         min_dist = np.min(self.matrix)
@@ -195,15 +228,15 @@ class dist_matrix():
         neighbor2 = neighbors[1][0]      
         return (neighbor1,neighbor2,min_dist)
       
-    def renew_matrix(self,clusters,neighbor1,neighbor2,L):
+    def renew_matrix(self,clusters,neighbor1,neighbor2,linkage,L):
         '''
         Change the distance matrix information, calculate the distance use the representative pts
         '''
         for i in range(self.matrix.shape[0]):
             if i < neighbor1:
-                self.matrix[i,neighbor1] = clusters[neighbor1].rep_dist(clusters[i],L)
+                self.matrix[i,neighbor1] = clusters[neighbor1].clus_dist(clusters[i],linkage,L)
             if i > neighbor1:
-                self.matrix[neighbor1,i] = clusters[neighbor1].rep_dist(clusters[i],L)
+                self.matrix[neighbor1,i] = clusters[neighbor1].clus_dist(clusters[i],linkage,L)
         self.matrix = np.delete(self.matrix,neighbor2,axis=1)
         self.matrix = np.delete(self.matrix,neighbor2,axis=0)
     
@@ -231,19 +264,25 @@ def visualize_cure(clusters,dist,neighbor1 = None,neighbor2 = None,min_dist = No
     print('-'*60)
     
     
-def Cure(X,num_expected_clusters,c,alpha,L=2,visualize = False):
+def Cure(X,num_expected_clusters,c,alpha,linkage='single',L=2,visualize = False):
     '''
     The Cure algorithm, will return clusters,all_reps,num_reps(list of cluster objects,all representative points,number of representative points)
     X: the data
     num_expected_clusters: N, how many clusters you want
     c: number of representative points in each cluster
     alpha: the given shrink parameter, the bigger alpha is the closer the representative to the centroid
+    linkage: 
+        if 'single' - calculate a nearest distance using representative points as the distance of two clusters, default value;
+        if 'complete' - calculate a furthest distance using representative points as the distance of two clusters;  
+        if 'average' - calculate a average distance using representative points as the distance of two clusters;
+        if 'centroid' - calculate a distance using centorids as the distance of two clusters; 
+        if 'ward' - calculate the variance if merging two clusters as the distance of two clusters;  
     L: the distance metric, L=1 the Manhattan distance, L=2 the Euclidean distance, by default L=2
     visualize: if set to true, it will show the clusters and distance matrix after each merging, only works for 2d dataset for testing
     '''
     clusters = Cluster.gen_cluster(X)
     
-    dist = dist_matrix(X,L)
+    dist = dist_matrix(X,linkage,L)
     
     num_clusters = len(clusters)
         
@@ -257,7 +296,7 @@ def Cure(X,num_expected_clusters,c,alpha,L=2,visualize = False):
             
         clusters[neighbor1].merge(clusters[neighbor2],c,alpha,L)
         
-        dist.renew_matrix(clusters,neighbor1,neighbor2,L)
+        dist.renew_matrix(clusters,neighbor1,neighbor2,linkage,L)
                
         # Drop the unused clusters' informations
         del(clusters[neighbor2])

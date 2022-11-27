@@ -6,7 +6,7 @@ note:   because we always run the COS in the notebook(automatically show the fig
 
 import matplotlib.pyplot as plt
 import numpy as np
-
+import pandas as pd
 from . import cos
 from . import generate as G
 
@@ -203,7 +203,40 @@ def show_cos(X,y,X_oversampled,y_oversampled,min_all_safe_area,min_half_safe_are
     plt.legend()
     plt.show()
 
+def show_baselines_areas(file_name):
+    file_name = 'baselines/c10_alpha0.5_N30_kappa_random_forest_k10.xlsx'
+    sheets = pd.ExcelFile(file_name).sheet_names[:-1] # exclude the final avg one
+    score_list = []
+    num_all_safe_list = []
+    num_half_safe_list = []
 
+    for sheet in sheets:
+        df = pd.read_excel(file_name,sheet_name=sheet,index_col=0)
+        dataset_name_list = df['cos'].index
+        score_list.append(df['cos'].values)
+        num_all_safe_list.append(df['all safe area'].values)
+        num_half_safe_list.append(df['half safe area'].values)
+
+    score_list = np.array(score_list)
+    num_all_safe_list = np.array(num_all_safe_list)
+    num_half_safe_list = np.array(num_half_safe_list)
+    folds = list(range(1,len(sheets)+1))
+
+    for index,dataset in enumerate(dataset_name_list):
+        fig = plt.figure(figsize=(15,5))
+        ax1 = fig.add_subplot(111)
+        ax1.plot(folds,num_all_safe_list[:,index],label=dataset+'_all safe areas',c='k',linestyle='dashed')
+        ax1.plot(folds,num_half_safe_list[:,index],label=dataset+'_half safe areas',c='brown',linestyle='dashed')
+        ax1.set_xlabel(str(len(folds))+' folds')
+        ax1.set_ylabel('Number of safe areas')
+        ax1.legend(loc = 1)
+        ax2 = ax1.twinx() 
+        ax2.plot(folds,score_list[:,index],label=dataset+'_score',c='blue')
+        for fold,score in zip(folds,score_list[:,index]):
+            ax2.text(fold,score,str(round(score,2)),c='blue')
+        ax2.legend(loc = 2)
+        ax2.set_ylabel('score')
+        plt.show()
 
 color_dict = {
             'black':                '#000000',
