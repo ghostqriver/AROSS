@@ -24,17 +24,22 @@ import warnings
 import time
 import os
 import math
+from tqdm import tqdm
 
 # Global variables
 dataset_path = 'Dataset/'
-datasets = ['Sampledata_new_1','Sampledata_new_2','Sampledata_new_3','Sampledata1','yeast','pima-indians-diabetes','haberman','ecoli2','glass1']
+datasets = ['Sampledata_new_1','Sampledata_new_2','Sampledata_new_3','Sampledata1','yeast','pima-indians-diabetes',
+            'haberman',
+            'ecoli2','glass1'
+            ]
 
 
-models = ['original','smote','db_smote'
+models = [#'original','smote','db_smote'
         #   ,'smote_d'
-        ,'cure_smote','kmeans_smote'
+        #,'cure_smote','kmeans_smote'
         #   ,'adasyn','somo','symprod'
-          ,'cos'] 
+          #,
+        'cos'] 
         # 'smote_enn','smote_tl','d_smote','nras' was moved
         # 'dto_smote' can not worked on 'Sampledata1'
 
@@ -225,12 +230,12 @@ def get_cos_para(args):
     if 'all_safe_gen' in args.keys():
         all_safe_gen = args['all_safe_gen']
     else:
-        all_safe_gen=G.Smote_Generator
+        all_safe_gen = G.Smote_Generator
         
     if 'half_safe_gen' in args.keys():
         half_safe_gen = args['half_safe_gen']
     else:
-        half_safe_gen=G.Smote_Generator   
+        half_safe_gen = G.Smote_Generator   
 
     if 'gaussian_scale' in args.keys():
         Gaussian_scale = args['gaussian_scale']
@@ -260,6 +265,28 @@ def get_cos_para(args):
     return N,c,alpha,linkage,L,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize
 
 
+def gen_file_name(args):
+    '''
+    Generate a string by the given parameters of COS
+    '''
+    fn = ''
+    # exclude 'all_safe_gen','half_safe_gen' in automatical way, or it will error because the generator function name is invalid when creating a file
+    for str_ in [j[0]+str(j[1]) for j in list(filter(lambda i:i[0] not in ['all_safe_gen','half_safe_gen'],[(i,args['args'][i]) for i in args['args']]))]:
+        fn = fn  + str_ +'_'
+    # add generator in
+    if 'all_safe_gen' in args['args'].keys():
+        if args['args']['all_safe_gen'] == G.Gaussian_Generator:
+            fn = fn + 'all_safe_genGaussian' + '_'
+    else:
+        fn = fn + 'all_safe_genSMOTE' + '_'
+            
+    if 'half_safe_gen' in args['args'].keys():
+        if args['args']['half_safe_gen'] == G.Gaussian_Generator:
+            fn = fn + 'half_safe_genGaussian' + '_'
+    else:
+        fn = fn + 'half_safe_genSMOTE' + '_'
+    return fn
+
 def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,show_folds=False,**args):
     '''
     '''
@@ -272,15 +299,14 @@ def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,sho
     check_dir(path)
     
     if excel_name == None:
-        fn = ''
-        for str_ in [j[0]+str(j[1]) for j in [(i,args['args'][i]) for i in args['args']]]:
-            fn = fn  + str_ +'_'
+       
         # version = time.strftime('%m%d_%H%M%S')
+        fn = gen_file_name(args)
         excel_name = fn+metric+'_'+classification_model+'_k'+str(k)+'.xlsx'
 
     writer = pd.ExcelWriter(path+excel_name)
     
-    for random_state in range(k):
+    for random_state in tqdm(range(k)):
         
         scores_df = pd.DataFrame(columns=models+['all safe area','half safe area'],index=datasets)
         

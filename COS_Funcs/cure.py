@@ -133,14 +133,14 @@ class Cluster:
             if 'complete' - calculate a furthest distance using representative points as the distance of two clusters;  
             if 'average' - calculate a average distance using representative points as the distance of two clusters;
             if 'centroid' - calculate a distance using centorids as the distance of two clusters; 
-            if 'ward' - calculate the variance if merging two clusters as the distance of two clusters;  
+            if 'cure_ward' - calculate the variance if merging two clusters as the distance of two clusters;  
         L: the distance metric, L=1 the Manhattan distance, L=2 the Euclidean distance, by default L=2
         '''
 
         # min_dist = calc_dist(self.rep_points[0],another_cluster.rep_points[0],L)
         if linkage == 'centroid':
             min_dist = calc_dist(self.center,another_cluster.center,L)
-        elif linkage == 'ward':
+        elif linkage == 'cure_ward':
             min_dist = np.var(np.vstack([self.points,another_cluster.points]),axis=0).mean() - (np.var(self.points,axis=0) + np.var(another_cluster.points,axis=0)).mean()
             
         else:
@@ -169,14 +169,12 @@ class Cluster:
     
     
     @staticmethod
-    def gen_cluster(X):
+    def gen_clusters(X):
         '''
         Initialize each points being in one cluster 
         '''
-        clusters = [] 
         num_clusters = len(X)
-        for i in range(num_clusters):
-            clusters = [Cluster(i,X[i],1) for i in range(num_clusters)] # i:index   X[i]:point   num:number of points in the cluster
+        clusters = [Cluster(i,X[i],1) for i in range(num_clusters)] # i:index   X[i]:point   num:number of points in the cluster
         return clusters
 
     @staticmethod
@@ -216,7 +214,7 @@ class dist_matrix():
                 if i>=j:
                     self.matrix[i][j]=float('inf')
                 else:
-                    if linkage=='ward':
+                    if linkage=='cure_ward':
                         self.matrix[i][j] = np.var(np.vstack([X[i],X[j]]),axis=0).mean()
                     else:
                         self.matrix[i][j] = calc_dist(X[i],X[j],L)  
@@ -280,7 +278,7 @@ def Cure(X,num_expected_clusters,c,alpha,linkage='single',L=2,visualize = False)
     L: the distance metric, L=1 the Manhattan distance, L=2 the Euclidean distance, by default L=2
     visualize: if set to true, it will show the clusters and distance matrix after each merging, only works for 2d dataset for testing
     '''
-    clusters = Cluster.gen_cluster(X)
+    clusters = Cluster.gen_clusters(X)
     
     dist = dist_matrix(X,linkage,L)
     

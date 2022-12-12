@@ -54,6 +54,7 @@ COS(X,y,N,c,alpha,shrink_half,expand_half,all_safe_weight,minlabel,majlabel,visu
 from . import cure
 from . import visualize as V
 from . import generate as G
+from . import clusterings as clusterings
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -425,7 +426,12 @@ def COS(X,y,N,c,alpha,linkage='single',L=2,shrink_half=False,expand_half=False,a
     minlabel,majlabel: given the label of minority class and majority class, if None will be set from the dataset automatically (only work in binary classification case)
     visualize: show the COS process, by default False
     '''
-    clusters,all_reps,num_reps = cure.Cure(X,N,c,alpha,linkage=linkage,L=L)
+    if linkage == 'ward':
+        clusters,all_reps,num_reps = clusterings.ward(X,N,c,alpha,L=L)
+        # Here we can use single/complete/.... by Agg too
+    else:
+        # And define linkage == 'cure_ward'/'cure_single'....
+        clusters,all_reps,num_reps = cure.Cure(X,N,c,alpha,linkage=linkage,L=L)
     areas,min_all_safe_area,min_half_safe_area = safe_areas(X,all_reps,y,minlabel=minlabel,majlabel=majlabel,shrink_half=shrink_half,expand_half=expand_half) 
     if visualize == True:
         print('Clusters:')
