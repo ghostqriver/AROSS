@@ -426,9 +426,8 @@ def COS(X,y,N,c,alpha,linkage='single',L=2,shrink_half=False,expand_half=False,a
     minlabel,majlabel: given the label of minority class and majority class, if None will be set from the dataset automatically (only work in binary classification case)
     visualize: show the COS process, by default False
     '''
-    if linkage == 'ward':
-        clusters,all_reps,num_reps = clusterings.ward(X,N,c,alpha,L=L)
-        # Here we can use single/complete/.... by Agg too
+    if linkage in ['ward','single','complete','average','pyc_cure']:
+        clusters,all_reps,num_reps = clusterings.clustering(X,N,c,alpha,linkage=linkage,L=L)
     else:
         # And define linkage == 'cure_ward'/'cure_single'....
         clusters,all_reps,num_reps = cure.Cure(X,N,c,alpha,linkage=linkage,L=L)

@@ -1,4 +1,5 @@
 from sklearn.cluster import AgglomerativeClustering
+from pyclustering.cluster.cure import cure as pyc_cure
 import numpy as np
 
 def calc_dist(vecA, vecB, L=2):
@@ -96,16 +97,54 @@ class Cluster:
         num_reps = (all_reps.shape[0])
         return all_reps,num_reps
 
-def ward(X,N,c,alpha,L=2):
+# Functions for pyclustering.cluster.cure
+def pyc_cure2label(length,clusters):
+    '''
+    Transform pyclustering.cluster.cure 's output cluster to cluster labels of data points
+    '''
+    labels = [0 for i in range(length)]
 
-    ward = AgglomerativeClustering(n_clusters=N, linkage="ward").fit(X)
-    labels = ward.labels_
-    
-    # into cluster objects
+    for cluster_id,point_indexs in enumerate(clusters):
+        for point_index in point_indexs:
+            labels[point_index] = cluster_id
+            
+    return labels
+
+
+def pyc_cure_flatten(rep_points):
+    '''
+    flatten pyclustering.cluster.cure 's representative points
+    '''
+    all_reps = []
+    for i in rep_points:
+        for j in i:
+            all_reps.append(j)
+    return all_reps,len(all_reps)
+
+
+def clustering(X,N,c,alpha,linkage,L=2):
+    '''
+    linkage = ward,single,complete,average
+    '''
     clusters = Cluster.gen_clusters(N)
-    clusters = Cluster.renew_clusters(X,labels,clusters,c,alpha,L)
     
-    # Flatten all representative points 
-    all_reps,num_reps = Cluster.flatten_rep(clusters)
+    if linkage in ['ward','single','complete','average']:
+        agg = AgglomerativeClustering(n_clusters=N, linkage=linkage).fit(X)
+        labels = agg.labels_
+        # into cluster objects
+        clusters = Cluster.renew_clusters(X,labels,clusters,c,alpha,L)
+        # Flatten all representative points 
+        all_reps,num_reps = Cluster.flatten_rep(clusters)
+    
+    elif linkage == 'pyc_cure':
+        cure_instance = pyc_cure(X,N,c,alpha)
+        cure_instance.process()
+        cure_clusters = cure_instance.get_clusters()
+        labels = pyc_cure2label(len(X),cure_clusters)
+        # Be careful here, the representative points in clusters are generate by Cluster class it self
+        clusters = Cluster.renew_clusters(X,labels,clusters,c,alpha,L)
+        # Use its own representative points
+        rep_points = cure_instance.get_representors()
+        all_reps,num_reps = pyc_cure_flatten(rep_points)
 
     return clusters,all_reps,num_reps

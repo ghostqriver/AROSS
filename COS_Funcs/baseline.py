@@ -286,6 +286,7 @@ def gen_file_name(args):
     else:
         fn = fn + 'half_safe_genSMOTE' + '_'
     return fn
+    
 
 def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,show_folds=False,**args):
     '''

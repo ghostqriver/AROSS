@@ -125,20 +125,20 @@ class Cluster:
         self.add_shrink(tmpSet,alpha)
         
         
-    def clus_dist(self,another_cluster,linkage='single',L=2):
+    def clus_dist(self,another_cluster,linkage='cure_single',L=2):
         '''
         Calculate the distance between two clusters
         linkage: 
-            if 'single' - calculate a nearest distance using representative points as the distance of two clusters, default value;
-            if 'complete' - calculate a furthest distance using representative points as the distance of two clusters;  
-            if 'average' - calculate a average distance using representative points as the distance of two clusters;
-            if 'centroid' - calculate a distance using centorids as the distance of two clusters; 
+            if 'cure_single' - calculate a nearest distance using representative points as the distance of two clusters, default value;
+            if 'cure_complete' - calculate a furthest distance using representative points as the distance of two clusters;  
+            if 'cure_average' - calculate a average distance using representative points as the distance of two clusters;
+            if 'cure_centroid' or 'centroid' - calculate a distance using centorids as the distance of two clusters; 
             if 'cure_ward' - calculate the variance if merging two clusters as the distance of two clusters;  
         L: the distance metric, L=1 the Manhattan distance, L=2 the Euclidean distance, by default L=2
         '''
 
         # min_dist = calc_dist(self.rep_points[0],another_cluster.rep_points[0],L)
-        if linkage == 'centroid':
+        if linkage == 'cure_centroid' or linkage == 'centroid' :
             min_dist = calc_dist(self.center,another_cluster.center,L)
         elif linkage == 'cure_ward':
             min_dist = np.var(np.vstack([self.points,another_cluster.points]),axis=0).mean() - (np.var(self.points,axis=0) + np.var(another_cluster.points,axis=0)).mean()
@@ -155,14 +155,14 @@ class Cluster:
                     
                     dist_i = calc_dist(i,j,L)
                     
-                    if linkage == 'complete':
+                    if linkage == 'cure_complete':
                         if dist_i > min_dist:
                             min_dist = dist_i
-                    elif linkage == 'average':
+                    elif linkage == 'cure_average':
                         if ind1 == 0 and ind2 == 0:
                             min_dist = 0
                         min_dist += dist_i/num_dists 
-                    else: # 'single' or others
+                    else: # 'cure_single' or others
                         if dist_i < min_dist:
                             min_dist = dist_i
         return min_dist
@@ -262,7 +262,7 @@ def visualize_cure(clusters,dist,neighbor1 = None,neighbor2 = None,min_dist = No
     print('-'*60)
     
     
-def Cure(X,num_expected_clusters,c,alpha,linkage='single',L=2,visualize = False):
+def Cure(X,num_expected_clusters,c,alpha,linkage='cure_single',L=2,visualize = False):
     '''
     The Cure algorithm, will return clusters,all_reps,num_reps(list of cluster objects,all representative points,number of representative points)
     X: the data
@@ -270,11 +270,11 @@ def Cure(X,num_expected_clusters,c,alpha,linkage='single',L=2,visualize = False)
     c: number of representative points in each cluster
     alpha: the given shrink parameter, the bigger alpha is the closer the representative to the centroid
     linkage: 
-        if 'single' - calculate a nearest distance using representative points as the distance of two clusters, default value;
-        if 'complete' - calculate a furthest distance using representative points as the distance of two clusters;  
-        if 'average' - calculate a average distance using representative points as the distance of two clusters;
-        if 'centroid' - calculate a distance using centorids as the distance of two clusters; 
-        if 'ward' - calculate the variance if merging two clusters as the distance of two clusters;  
+        if 'cure_single' - calculate a nearest distance using representative points as the distance of two clusters, default value;
+        if 'cure_complete' - calculate a furthest distance using representative points as the distance of two clusters;  
+        if 'cure_average' - calculate a average distance using representative points as the distance of two clusters;
+        if 'cure_centroid' or 'centroid' - calculate a distance using centorids as the distance of two clusters; 
+        if 'cure_ward' - calculate the variance if merging two clusters as the distance of two clusters;  
     L: the distance metric, L=1 the Manhattan distance, L=2 the Euclidean distance, by default L=2
     visualize: if set to true, it will show the clusters and distance matrix after each merging, only works for 2d dataset for testing
     '''
