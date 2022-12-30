@@ -1,6 +1,23 @@
 from sklearn.cluster import AgglomerativeClustering
 from pyclustering.cluster.cure import cure as pyc_cure
 import numpy as np
+import pandas as pd
+
+from . import choose_para as choose
+
+def get_labels(y):
+    '''
+    Return the minority class's label and majority class's label when given all labels y
+    Only works well on binary dataset as yet
+    return minlabel,int(majlabel)
+    '''
+    valuecounts=pd.Series(y).value_counts().index
+    majlabel=valuecounts[0]
+    minlabel=valuecounts[1:]
+    if len(minlabel)==1:
+        minlabel=int(minlabel[0])
+    return minlabel,int(majlabel)
+
 
 def calc_dist(vecA, vecB, L=2):
     '''
@@ -16,41 +33,49 @@ def calc_dist(vecA, vecB, L=2):
 
 
 class Cluster:
-    def __init__(self,num = 0):
+    def __init__(self,c):
         self.index = []
         self.points = []
-        # self.center = point
-        # self.rep_points = [point]
-        self.num = num
+        self.labels = []
+        self.num = 0
+        self.center = 0
+        self.rep_points = []
+        self.c = c
+        
 
-    def renew_point(self,index,point):
+    def renew_point(self,index,point,label):
         '''
         renew the points in the cluster by iteration after the clustering
         '''
         self.index.append(index)
         self.points.append(point)
+        self.labels.append(label)
 
-    def renew_para(self):
+    def renew_para(self,minlabel,majlabel):
         '''
         renew the paras after finishing renewing all points
-        call by renew_rep()
         '''
         self.center =  np.mean(self.points,axis=0)
         self.num = len(self.points)   
-
+        self.points = np.array(self.points)
+        self.labels = np.array(self.labels)
+        new_c = choose.choose_c(self,minlabel,majlabel)
+        if new_c > self.c:
+            self.c = new_c 
+            
     def add_shrink(self,tmp_repset,alpha):
-        self.rep_points = tmp_repset + alpha * (self.center - tmp_repset) 
+        if len(tmp_repset) != 0:
+            self.rep_points = tmp_repset + alpha * (self.center - tmp_repset) 
     
     def renew_rep(self,c,alpha,L):
         '''
-        renew the para and representative points of the cluster after finishing renewing all points
+        renew the para and representative points of the cluster
         '''
-        self.renew_para()
-        if self.num<=c: # if total number of points less than c, the representative points will be points itselves
-            tmpSet = self.points 
+        if self.num <= self.c: # if total number of points less than c, the representative points will be points itselves
+            tmpSet = self.points
         else:
             tmpSet = []
-            for i in range(c):
+            for i in range(self.c):
                 maxDist = 0
                 for p in self.points:
                     if i==0:
@@ -65,22 +90,26 @@ class Cluster:
         self.add_shrink(tmpSet,alpha)
 
     @staticmethod
-    def gen_clusters(N):
+    def gen_clusters(N,c):
         '''
         Initialize clusters 
         '''
         num_clusters = N
-        clusters = [Cluster(0) for i in range(num_clusters)] 
+        if isinstance(c,int):
+            clusters = [Cluster(c) for i in range(num_clusters)] 
+        else:
+            clusters = [Cluster(0) for i in range(num_clusters)] 
         return clusters
 
     @staticmethod
-    def renew_clusters(X,labels,clusters,c,alpha,L): 
+    def renew_clusters(X,y,labels,clusters,c,alpha,L,minlabel,majlabel): 
         '''
-        Renew the clusters 
+        Put the output of Agglomerative clustering into Cluster objects
         '''
         for index,label in enumerate(labels):
-            clusters[label].renew_point(index,X[index])
+            clusters[label].renew_point(index,X[index],y[index])
         for cluster in clusters:
+            cluster.renew_para(minlabel,majlabel)
             cluster.renew_rep(c,alpha,L)
         return clusters
 
@@ -96,6 +125,7 @@ class Cluster:
         all_reps = np.array(lst) 
         num_reps = (all_reps.shape[0])
         return all_reps,num_reps
+
 
 # Functions for pyclustering.cluster.cure
 def pyc_cure2label(length,clusters):
@@ -122,17 +152,20 @@ def pyc_cure_flatten(rep_points):
     return all_reps,len(all_reps)
 
 
-def clustering(X,N,c,alpha,linkage,L=2):
+def clustering(X,y,N,c,alpha,linkage,L=2,minlabel=None,majlabel=None):
     '''
     linkage = ward,single,complete,average
     '''
-    clusters = Cluster.gen_clusters(N)
+    if minlabel == None and majlabel == None:
+        minlabel,majlabel = get_labels(y)
+        
+    clusters = Cluster.gen_clusters(N,c)
     
     if linkage in ['ward','single','complete','average']:
         agg = AgglomerativeClustering(n_clusters=N, linkage=linkage).fit(X)
         labels = agg.labels_
         # into cluster objects
-        clusters = Cluster.renew_clusters(X,labels,clusters,c,alpha,L)
+        clusters = Cluster.renew_clusters(X,y,labels,clusters,c,alpha,L,minlabel=minlabel,majlabel=majlabel)
         # Flatten all representative points 
         all_reps,num_reps = Cluster.flatten_rep(clusters)
     

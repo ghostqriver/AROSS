@@ -427,7 +427,7 @@ def COS(X,y,N,c,alpha,linkage='single',L=2,shrink_half=False,expand_half=False,a
     visualize: show the COS process, by default False
     '''
     if linkage in ['ward','single','complete','average','pyc_cure']:
-        clusters,all_reps,num_reps = clusterings.clustering(X,N,c,alpha,linkage=linkage,L=L)
+        clusters,all_reps,num_reps = clusterings.clustering(X,y,N,c,alpha,linkage=linkage,L=L,minlabel=minlabel,majlabel=majlabel)
     else:
         # And define linkage == 'cure_ward'/'cure_single'....
         clusters,all_reps,num_reps = cure.Cure(X,N,c,alpha,linkage=linkage,L=L)

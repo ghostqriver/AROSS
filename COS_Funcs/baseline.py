@@ -28,13 +28,40 @@ from tqdm import tqdm
 
 # Global variables
 dataset_path = 'Dataset/'
-datasets = ['Sampledata_new_1','Sampledata_new_2','Sampledata_new_3','Sampledata1','yeast','pima-indians-diabetes',
-            'haberman',
-            'ecoli2','glass1'
-            ]
+datasets = [
+            'Sampledata_new_1',
+            'Sampledata_new_2',
+            'Sampledata_new_3',
+            'Sampledata1',
+            'yeast',
+            'pima-indians-diabetes',
+            'ecoli2',
+            'glass1']
+
+# datasets = [
+#             # 'abalone4–8',
+#             # 'abalone5–10',
+#             'ecoli2',
+#             # 'eligibility-loan',
+#             # 'glass0123vs456',
+#             'glass1',
+#             # 'leaf',
+#             # 'Maternal-Risk-lmvsh',
+#             # 'page-blocks1vs2345',
+#             # 'pima-indians-diabetes',
+#             'Sampledata1',
+#             'Sampledata_new_1',
+#             'Sampledata_new_2',
+#             'Sampledata_new_3',
+#             # 'seeds',
+#             # 'wheat1',
+#             # 'winequality-red-3456vs78',
+#             # 'winequality-red-34vs56',
+#             'yeast']
 
 
-models = [#'original','smote','db_smote'
+models = ['original','smote',
+        #'db_smote'
         #   ,'smote_d'
         #,'cure_smote','kmeans_smote'
         #   ,'adasyn','somo','symprod'
@@ -288,7 +315,7 @@ def gen_file_name(args):
     return fn
     
 
-def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,show_folds=False,**args):
+def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,show_folds=False,dataset_path=dataset_path,datasets=datasets,**args):
     '''
     '''
     pd.set_option('precision',5)  
@@ -419,3 +446,7 @@ def show_baseline_cos(dataset,random_state=None,pos_label=None,**args):
     X_oversampled,y_oversampled,_,_ = oversampling(model,X_train,y_train,args['args'])
 
     plt.show()
+    
+
+# def baseline_para_choose():
+#     pass

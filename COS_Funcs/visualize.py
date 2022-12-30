@@ -54,8 +54,9 @@ def show_rep_points(X,y,clusters):
     for label in labels:
         plt.scatter(X[y==label,0],X[y==label,1])
     for cluster in clusters:
-        rep_points = np.array(cluster.rep_points)
-        plt.scatter(rep_points[:,0],rep_points[:,1],marker='x',c='k')
+        if len(cluster.rep_points) > 0:
+            rep_points = np.array(cluster.rep_points)
+            plt.scatter(rep_points[:,0],rep_points[:,1],marker='x',c='k')
     plt.title('representative points')
     # plt.show()
 
