@@ -349,6 +349,7 @@ def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,sho
 
                 X_train,X_test,y_train,y_test = train_test_split(X,y,stratify=y,random_state=random_state)
 
+                # if pos_label == None:
                 pos_label = cos.get_labels(y_test)[0]
 
                 if model == 'cos':

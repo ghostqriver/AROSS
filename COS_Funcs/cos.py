@@ -397,7 +397,7 @@ def oversampling(X,y,min_all_safe_area,min_half_safe_area,all_safe_gen=G.Smote_G
     return X_generated,y_generated
 
 
-def COS(X,y,N,c,alpha,linkage='single',L=2,shrink_half=False,expand_half=False,all_safe_weight=2,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,minlabel=None,majlabel=None,visualize=False):
+def COS(X,y,N,c,alpha,linkage='cure_single',L=2,shrink_half=False,expand_half=False,all_safe_weight=2,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,minlabel=None,majlabel=None,visualize=False):
     '''
     CURE(clustering and getting the representative points) -->
     safe area(Generate the safe areas around all the representative points) -->

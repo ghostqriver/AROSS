@@ -59,15 +59,14 @@ class Cluster:
         self.num = len(self.points)   
         self.points = np.array(self.points)
         self.labels = np.array(self.labels)
-        new_c = choose.choose_c(self,minlabel,majlabel)
-        if new_c > self.c:
-            self.c = new_c 
-            
+        if self.c == 0:
+            self.c = choose.choose_c(self)
+
     def add_shrink(self,tmp_repset,alpha):
         if len(tmp_repset) != 0:
             self.rep_points = tmp_repset + alpha * (self.center - tmp_repset) 
     
-    def renew_rep(self,c,alpha,L):
+    def renew_rep(self,alpha,L):
         '''
         renew the para and representative points of the cluster
         '''
@@ -110,7 +109,7 @@ class Cluster:
             clusters[label].renew_point(index,X[index],y[index])
         for cluster in clusters:
             cluster.renew_para(minlabel,majlabel)
-            cluster.renew_rep(c,alpha,L)
+            cluster.renew_rep(alpha,L)
         return clusters
 
     @staticmethod
