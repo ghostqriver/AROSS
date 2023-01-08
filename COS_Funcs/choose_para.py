@@ -1,5 +1,6 @@
 import COS_Funcs.baseline as baseline
 import COS_Funcs.cos as cos
+import COS_Funcs.generate as G
 
 import math
 import scipy
@@ -43,7 +44,7 @@ warnings.filterwarnings("ignore")
 #     return best_cluster
 
 
-def cos_para_show(datasets,N,c,alpha,linkage='ward',metric='recall',classification_model='random_forest',k=10,pos_label=None):
+def cos_para_show(datasets,N,c,alpha,linkage='ward',all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,metric='recall',classification_model='random_forest',k=10,pos_label=None):
     '''
     Did not choose generator yet
     '''
@@ -76,16 +77,16 @@ def cos_para_show(datasets,N,c,alpha,linkage='ward',metric='recall',classificati
 
                     if 'c' in changing_para.keys():
                         c = para 
-                        X_train,y_train,num_all_safe,num_half_safe = cos.COS(X_train,y_train,N,c,alpha,linkage=linkage)
+                        X_train,y_train,num_all_safe,num_half_safe = cos.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
                     elif 'N' in changing_para.keys():
                         N = para
-                        X_train,y_train,num_all_safe,num_half_safe = cos.COS(X_train,y_train,N,c,alpha,linkage=linkage)
+                        X_train,y_train,num_all_safe,num_half_safe = cos.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
                     elif 'alpha' in changing_para.keys():
                         alpha = para
-                        X_train,y_train,num_all_safe,num_half_safe = cos.COS(X_train,y_train,N,c,alpha,linkage=linkage)
+                        X_train,y_train,num_all_safe,num_half_safe = cos.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
                     elif 'linkage' in changing_para.keys():
                         linkage = para
-                        X_train,y_train,num_all_safe,num_half_safe = cos.COS(X_train,y_train,N,c,alpha,linkage=linkage)
+                        X_train,y_train,num_all_safe,num_half_safe = cos.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
 
                     y_pred = baseline.do_classification(X_train,y_train,X_test,classification_model)
                     scores.append(baseline.calc_score(metric,y_test,y_pred,pos_label))
@@ -167,7 +168,7 @@ def choose_N(dataset,max_cluster=None):
     return N
 
 
-def choose_alpha(dataset,N=None,c='sample',alpha_list=None,linkage='ward',metric='recall',classification_model='random_forest',k=10,pos_label=None):
+def choose_alpha(dataset,N=None,c='sample',alpha_list=None,linkage='ward',all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,metric='recall',classification_model='random_forest',k=10,pos_label=None):
     
     dataset_path = 'Dataset/'
     best_alpha = -1
@@ -191,7 +192,7 @@ def choose_alpha(dataset,N=None,c='sample',alpha_list=None,linkage='ward',metric
             X_train,X_test,y_train,y_test = train_test_split(X,y,stratify=y,random_state=random_state)
 
             
-            X_train,y_train,num_all_safe,num_half_safe = cos.COS(X_train,y_train,N,c,alpha,linkage=linkage)
+            X_train,y_train,num_all_safe,num_half_safe = cos.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
 
             y_pred = baseline.do_classification(X_train,y_train,X_test,classification_model)
 

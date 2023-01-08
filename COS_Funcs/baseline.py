@@ -61,13 +61,16 @@ datasets = [
 
 
 models = ['original','smote',
-        #'db_smote'
+        'db_smote'
         #   ,'smote_d'
-        #,'cure_smote','kmeans_smote'
+        ,'cure_smote',
+        'kmeans_smote'
         #   ,'adasyn','somo','symprod'
           #,
-        'cos'] 
-        # 'smote_enn','smote_tl','d_smote','nras' was moved
+        # 'cos'
+        ] 
+        # 'smote_enn',
+        # 'smote_tl','d_smote','nras' was moved
         # 'dto_smote' can not worked on 'Sampledata1'
 
 
