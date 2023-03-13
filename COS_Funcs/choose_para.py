@@ -44,6 +44,7 @@ warnings.filterwarnings("ignore")
 #     return best_cluster
 
 
+
 def cos_para_show(datasets,N,c,alpha,linkage='ward',all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,metric='recall',classification_model='random_forest',k=10,pos_label=None):
     '''
     Did not choose generator yet
@@ -103,6 +104,7 @@ def cos_para_show(datasets,N,c,alpha,linkage='ward',all_safe_gen=G.Smote_Generat
         plt.plot(paras,results,label=dataset)
     plt.legend()
 #     return changing_para,dataset_results
+
 
 
 ## Cluster purity
