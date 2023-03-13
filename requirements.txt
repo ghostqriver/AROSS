@@ -2,3 +2,5 @@
 
 
 pyclustering
+kneed
+seaborn

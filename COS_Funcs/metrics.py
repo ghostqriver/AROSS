@@ -5,7 +5,9 @@ Other implementations mainly use for test and checking the score.
 '''
 
 import numpy as np
-import COS_Funcs.cos as cos
+# import COS_Funcs.cos as cos
+import cos as cos
+
 
 
 def confusion_matrix(y_test,y_pred,pos_label=None):

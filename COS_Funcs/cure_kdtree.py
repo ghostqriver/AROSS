@@ -8,10 +8,13 @@ import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt
 import time,os
-from COS_Funcs.dist import calc_cov_i,calc_dist
+from COS_Funcs.dist import calc_cov_i,calc_dist,fast_dist
 from COS_Funcs.kdtree import kdtree_
-
 from . import visualize as V
+# from dist import calc_cov_i,calc_dist
+# from kdtree import kdtree_
+# import visualize as V
+
 
 class Cluster:
     def __init__(self,index,point,num = 1):
@@ -38,10 +41,11 @@ class Cluster:
         It calculated by weight(num of points) * mean values
         '''
         dimension = len(self.center)
-        self.center = [0] * dimension
+        center = [0] * dimension
         # Because points stored in lists, so should be updated in each dimensions
         for dim in range(dimension):
-            self.center[dim] = (self.num * self.center[dim] + another_cluster.num * another_cluster.center[dim] ) / (another_cluster.num+self.num)
+            center[dim] = (self.num * self.center[dim] + another_cluster.num * another_cluster.center[dim] ) / (another_cluster.num+self.num)
+        self.center = center
         
     def renew_paras(self,another_cluster):
         '''
@@ -288,7 +292,7 @@ class Cure():
                 self.labels_[point_index] = cluster_id
             
         return self.clusters_,self.reps_,self.num_reps_,self.centers_,self.labels_
-        
+
     def fit(self,X):
         self.data = self.return_list(X)
         self.create_queue()

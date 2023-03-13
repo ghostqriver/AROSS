@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from . import choose_para as choose
+# import choose_para as choose
 
 def get_labels(y):
     '''
@@ -174,7 +175,7 @@ def clustering(X,y,N,c,alpha,linkage,L=2,minlabel=None,majlabel=None):
         cure_clusters = cure_instance.get_clusters()
         labels = pyc_cure2label(len(X),cure_clusters)
         # Be careful here, the representative points in clusters are generate by Cluster class it self
-        clusters = Cluster.renew_clusters(X,labels,clusters,c,alpha,L)
+        clusters = Cluster.renew_clusters(X,y,labels,clusters,c,alpha,L,minlabel=minlabel,majlabel=majlabel)
         # Use its own representative points
         rep_points = cure_instance.get_representors()
         all_reps,num_reps = pyc_cure_flatten(rep_points)

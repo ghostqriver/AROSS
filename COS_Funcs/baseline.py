@@ -1,9 +1,15 @@
-from sklearn import metrics
-import COS_Funcs.metrics as M
-import COS_Funcs.visualize as V
-import COS_Funcs.cos as cos
-import COS_Funcs.generate as G
 
+# import COS_Funcs.metrics as M
+# import COS_Funcs.visualize as V
+# import COS_Funcs.cos as cos
+# import COS_Funcs.generate as G
+
+import metrics as M
+import visualize as V
+import cos as cos
+import generate as G
+
+from sklearn import metrics
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE,SVMSMOTE,ADASYN

@@ -51,10 +51,17 @@ COS(X,y,N,c,alpha,shrink_half,expand_half,all_safe_weight,minlabel,majlabel,visu
     visualize: show the COS process, by default False
 '''
 
-from . import cure
-from . import visualize as V
-from . import generate as G
-from . import clusterings as clusterings
+# from . import cure
+# from . import visualize as V
+# from . import generate as G
+# from . import clusterings as clusterings
+
+import cure
+import visualize as V
+import generate as G
+import clusterings as clusterings
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd

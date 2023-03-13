@@ -6,8 +6,10 @@ import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt
 import time,os
-from COS_Funcs.dist import calc_cov_i,calc_dist
-from . import visualize as V
+# from COS_Funcs.dist import calc_cov_i,calc_dist
+# from . import visualize as V
+from dist import calc_cov_i,calc_dist
+import visualize as V
 
 cov_i = None
 

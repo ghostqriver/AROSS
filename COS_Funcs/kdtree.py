@@ -3,8 +3,8 @@
 from pyclustering.container.kdtree import kdtree,node,kdtree_balanced
 from pyclustering.utils import find_left_element
 import operator
-from COS_Funcs.dist import calc_cov_i,calc_dist
-
+# from COS_Funcs.dist import calc_cov_i,calc_dist
+from dist import calc_cov_i,calc_dist
 COMPARE_CHILD = {
     0: (operator.le, operator.sub),
     1: (operator.ge, operator.add),
