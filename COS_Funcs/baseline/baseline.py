@@ -1,143 +1,136 @@
 dataset_path = 'Datasets/'
 
-models = [
-        'original','smote','db_smote','smote_d','cure_smote','kmeans_smote','adasyn','somo','symprod',
-        'smote_enn','smote_tl','d_smote','nras','g_smote','rwo_sampling','ans','svm_smote',
-         # 'wgan', 'wgan_filter' need to be modify a bit, 'tabgan' error
-         # 'cos'
-         ] 
+oversamplers = ['original','smote','db_smote','smote_d','cure_smote','kmeans_smote','adasyn','somo','symprod',
+                'smote_enn','smote_tl',,'nras','g_smote','rwo_sampling','ans','svm_smote',
+                # 'd_smote' also slow 
+                # 'wgan', 'wgan_filter' need to be modify a bit, 'tabgan' error
+                # 'cos'
+                ] 
 
 classifiers = ['knn','svm','decision_tree','random_forest','mlp','naive_bayes'] 
 
 metrics = ['recall','f1_score','g_mean','kappa','auc','accuracy','precision']
 
+save_path = 'test/'
+cos_save_path = 'costest/'
+gan_save_path = 'gantest/'
+
+import os
 import glob
 datasets = glob.glob(os.path.join(dataset_path,'*.csv'))
 
 
 from COS_Funcs.utils import *
-from COS_Funcs.baseline.classifiers import *
-from COS_Funcs.baseline.oversamplers import *
-from COS_Funcs.baseline.metrics import *
+from COS_Funcs.baseline.classifiers import do_classification
+from COS_Funcs.baseline.oversamplers import do_oversampling
+from COS_Funcs.baseline.metrics import calc_score
 
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import pandas as pd
 import warnings
-import os
+import time
 import math
 from tqdm import tqdm
 import copy
 
-def gen_df(models,datasets,avg_scores):
-    # avg_scores_df = pd.DataFrame(columns=models+['all safe area','half safe area'],index=datasets)
-    avg_scores_df = pd.DataFrame(columns=models,index=datasets)
-
-    for index,i in zip(avg_scores_df.index,range(len(avg_scores))):
-        avg_scores_df.loc[index] = avg_scores[i]
-    return avg_scores_df
-
-def base_name(metric,classification_model,k):
-    return metric+'_'+classification_model+'_k'+str(k)+'.xlsx'
-
-def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,show_folds=False,dataset_path=dataset_path,datasets=datasets,**args):
-    '''
-    '''
-    print(args)
+def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversamplers,dataset_path=dataset_path,datasets=datasets,show_folds=False,**args):
     pd.set_option('precision',5)  
     pd.set_option('display.width', 100)
     pd.set_option('expand_frame_repr', False)
     warnings.filterwarnings("ignore") 
     
-    path = 'test/'
-    make_dir(path)
-    
-    if excel_name == None:
-       
-        # version = time.strftime('%m%d_%H%M%S')
-        # fn = gen_file_name(args)
-        # excel_name = fn+metric+'_'+classification_model+'_k'+str(k)+'.xlsx'
-        excel_name = base_name(metric,classification_model,k)
+    if 'cos' in oversamplers:
+        path = cos_save_path
+    elif 'wgan' in oversamplers:
+        path = gan_save_path
+    else:
+        path = save_path
         
-    writer = pd.ExcelWriter(os.path.join(path+excel_name))
+    make_dir(path)
+
+    writers = create_writer(classifiers,metrics,k,oversamplers=oversamplers,datasets=datasets,path=path)
     
     for random_state in tqdm(range(k)):
         
-        # scores_df = pd.DataFrame(columns=models+['all safe area','half safe area'],index=datasets)
-        scores_df = pd.DataFrame(columns=models,index=datasets)
-        
         for dataset in datasets: 
             
-            print(dataset)
+#             print(dataset)
             scores = [] 
 
-            for model in models:
-
+            for oversampler in oversamplers:
+                print(oversampler,end='|')
                 X,y = read_data(dataset)
 
                 X_train,X_test,y_train,y_test = split_data(X,y)
 
-                # if pos_label == None:
-                pos_label = get_labels(y_test)[0]
+                pos_label = get_labels(y)[0]
                 
                 try:
-                    
-                    if model == 'cos':
-                        X_train,y_train,num_all_safe,num_half_safe = oversampling(model,X_train,y_train,args) 
-                        
-                    elif model == 'wgan':
-                        pass
-                        # X_train,y_train,X_train_f,y_train_f = 
-                    elif model == 'wgan_filter':
-                        pass
-                        # X_train,y_train = X_train_f,y_train_f
+                    start = time.time()
+                    if oversampler == 'cos':
+                        X_train,y_train,num_all_safe,num_half_safe = do_oversampling(oversampler,X_train,y_train,args) 
+
                     else:
-                        X_train,y_train = oversampling(model,X_train,y_train,args) 
-                    
-                    
-                    # for classificaion_model in classfication_models:
-                             
-                    y_pred = do_classification(X_train,y_train,X_test,classification_model)
-                    # for metric in metrics:   
-                    scores.append(calc_score(metric,y_test,y_pred,pos_label))
+                        X_train,y_train = do_oversampling(oversampler,X_train,y_train,args) 
+                    end = time.time()
+                    print('cost:',end-start)
+                    for classifier in classifiers:     
+                        y_pred = do_classification(X_train,y_train,X_test,classifier)
+                        for metric in metrics:
+                            print(random_state+1,'|',dataset,'|',oversampler,'|',classifier,'|',metric,':',end='')
+                            score = calc_score(metric,y_test,y_pred,pos_label)
+                            print(score)
+                            writers[classifier][metric]['scores_df'][random_state][oversampler].loc[dataset] = score
+                            
                     
                 except BaseException as e: 
-                    scores.append(None)
+                    print(oversampler,'cause an error on',dataset)
                     continue
-                                    
-                if model == 'cos':
-                    scores.append(num_all_safe)
-                    scores.append(num_half_safe)
+                
+    write_writer(writers,classifiers,metrics,k,oversamplers,datasets)
+    return writers
 
-            scores_df.loc[dataset] = scores
-        
-        tmp_df = copy.deepcopy(scores_df)
-        tmp_df.fillna(0)
-        if random_state == 0:
-            avg_scores = tmp_df.values
-        else:
-            avg_scores += tmp_df.values
-        
-        if show_folds == True:
-            print(random_state+1,'fold:')
-            print(scores_df)
-            
-        scores_df.columns = list(map(lambda x:str.upper(x),models))
-        scores_df.index = list(map(lambda x:os.path.basename(x).split('.')[0],datasets))
-        scores_df.to_excel(writer,sheet_name= 'fold_'+str(random_state+1))
-        
-    avg_scores = avg_scores/k
-    
-    avg_scores_df = gen_df(models,datasets,avg_scores)
-    avg_scores_df.columns = list(map(lambda x:str.upper(x),models))
-    avg_scores_df.index = list(map(lambda x:os.path.basename(x).split('.')[0],datasets))
-    avg_scores_df.to_excel(writer,sheet_name= 'avg')
-    writer.save()
-    print("The scores in each fold stored in",path+excel_name)
-    print("The average scores:")
-    print(avg_scores_df)
+def base_name(metric,classifier,k):
+    return classifier+'_'+metric+'_k'+str(k)+'.xlsx'
 
-    return path+excel_name
+def create_writer(classifiers,metrics,k,oversamplers,datasets,path):
+    writers = dict()
+    for classifier in classifiers:
+        writers[classifier] = {}
+        for metric in metrics:
+            writers[classifier][metric] = dict()
+            if 'cos' not in oversamplers:
+                file_name = base_name(metric,classifier,k)
+            file_name = os.path.join(path+file_name)
+            writers[classifier][metric]['file_name'] = file_name
+            writers[classifier][metric]['writer'] =  pd.ExcelWriter(file_name)
+            writers[classifier][metric]['scores_df'] = []
+            for i in range(k):
+                writers[classifier][metric]['scores_df'].append(pd.DataFrame(columns=oversamplers,index=datasets))
+    return writers
+
+def write_writer(writers,classifiers,metrics,k,oversamplers,datasets):
+    columns = list(map(lambda x:str.upper(x),oversamplers))
+    index = list(map(lambda x:os.path.basename(x).split('.')[0],datasets))
+    for classifier in classifiers:
+        for metric in metrics:
+            writer = writers[classifier][metric]['writer']
+            file_name = writers[classifier][metric]['file_name']
+            for random_state in range(k): 
+                df = writers[classifier][metric]['scores_df'][random_state]
+                df.columns = columns
+                df.index = index
+                df.to_excel(writer,sheet_name= 'fold_'+str(random_state+1))
+                tmp_df = copy.deepcopy(df)
+                if random_state == 0:
+                    avg = tmp_df
+                else:
+                    avg += tmp_df
+            avg = avg/k
+            avg.to_excel(writer,sheet_name= 'avg')
+            writer.save()
+            print("File saved in",file_name)    
 
 # Modify it because parameter name changed
 def show_baseline(dataset,random_state=None,pos_label=None,img_name=None,**args):
@@ -178,3 +171,11 @@ def show_baseline(dataset,random_state=None,pos_label=None,img_name=None,**args)
     plt.savefig(path+img_name)
     print("The image stored in",path+img_name)
     plt.show()
+    
+def gen_df(models,datasets,avg_scores):
+    # avg_scores_df = pd.DataFrame(columns=models+['all safe area','half safe area'],index=datasets)
+    avg_scores_df = pd.DataFrame(columns=models,index=datasets)
+
+    for index,i in zip(avg_scores_df.index,range(len(avg_scores))):
+        avg_scores_df.loc[index] = avg_scores[i]
+    return avg_scores_df
