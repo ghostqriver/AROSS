@@ -4,7 +4,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
-
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neural_network import MLPClassifier
 import numpy as np
 
 def get_dt(X_train, y_train):
@@ -31,11 +32,11 @@ def do_classification(X_train,y_train,X_test,classification_model):
     elif classification_model == 'random_forest':
         model = RandomForestClassifier()
     
-    elif classification_model == 'neural_network':
+    elif classification_model == 'mlp':
         model = MLPClassifier()
     
-    elif classification_model == 'c_classifier':
-        pass
+    elif classification_model == 'naive_bayes':
+        model = GaussianNB()
     
     model.fit(X_train,y_train)
     return model.predict(X_test)

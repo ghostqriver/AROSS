@@ -6,7 +6,7 @@ from .WGAN import *
 from .TABGAN import *
 from .utils import *
 from COS_Funcs.utils import get_labels
-from COS_Funcs.baseline.classifier import do_classification
+from COS_Funcs.baseline.classifiers import do_classification
 
 def WGAN(X_train,y_train,target='label',classes=[0,1]):
     
