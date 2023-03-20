@@ -1,8 +1,8 @@
-sklearn
+pandas
+scikit-learn
 imblearn
-sklearn
 smote_variants
-dtosmote
 pyclustering
 kneed
-seaborn
+tabgan
+openpyxl

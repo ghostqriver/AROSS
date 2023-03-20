@@ -1,7 +1,7 @@
 dataset_path = 'Datasets/'
 
 oversamplers = ['original','smote','db_smote','smote_d','cure_smote','kmeans_smote','adasyn','somo','symprod',
-                'smote_enn','smote_tl',,'nras','g_smote','rwo_sampling','ans','svm_smote',
+                'smote_enn','smote_tl','nras','g_smote','rwo_sampling','ans','svm_smote',
                 # 'd_smote' also slow 
                 # 'wgan', 'wgan_filter' need to be modify a bit, 'tabgan' error
                 # 'cos'
