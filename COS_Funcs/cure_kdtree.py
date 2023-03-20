@@ -1,5 +1,4 @@
 """
-
 @author: wangyizhi
 @reference: https://github.com/annoviko/pyclustering/blob/bf4f51a472622292627ec8c294eb205585e50f52/pyclustering/cluster/cure.py
 """
@@ -24,7 +23,7 @@ class Cluster:
         self.rep_points = [point]
         self.num = num
         self.closest = None
-        self.distance = None
+        self.distance = None  # the real distance should be its square root
         
     def copy_(self,another_cluster):
         self.index = another_cluster.index
@@ -92,10 +91,10 @@ class Cluster:
                 maxDist = 0
                 for p in self.points:
                     if i==0:
-                        minDist = calc_dist(p,self.center,L=L,cov_i=cov_i)
+                        minDist = fast_dist(p,self.center,L=L,cov_i=cov_i)
                     else:
                         # for a given p, if p's min distance to any q in tmpset is biggest, then p is next representative point 
-                        minDist = np.min([calc_dist(p,q,L=L,cov_i=cov_i) for q in tmpSet])
+                        minDist = np.min([fast_dist(p,q,L=L,cov_i=cov_i) for q in tmpSet])
                     if minDist >= maxDist:
                         maxPoint = p
                         maxDist = minDist
@@ -113,57 +112,71 @@ class Cluster:
             if 'cure_ward' - calculate the variance if merging two clusters as the distance of two clusters;  
         L: the distance metric, L=1 the Manhattan distance, L=2 the Euclidean distance, by default L=2
         '''
-
-               # min_dist = calc_dist(self.rep_points[0],another_cluster.rep_points[0],L)
         if linkage == 'cure_centroid' or linkage == 'centroid' :
-            min_dist = calc_dist(self.center,another_cluster.center,L=L,cov_i=cov_i)
-        elif linkage == 'cure_ward':
-            min_dist = np.var(np.vstack([self.points,another_cluster.points]),axis=0).mean() - (np.var(self.points,axis=0) + np.var(another_cluster.points,axis=0)).mean()
+            min_dist = fast_dist(self.center,another_cluster.center,L=L,cov_i=cov_i)
+        # elif linkage == 'cure_ward':
+        #     min_dist = np.var(np.vstack([self.points,another_cluster.points]),axis=0).mean() - (np.var(self.points,axis=0) + np.var(another_cluster.points,axis=0)).mean()
             
         else:
             # For average link
-            num_dists = len(self.rep_points) * len(another_cluster.rep_points)
-
+            # num_dists = len(self.rep_points) * len(another_cluster.rep_points)
+            min_dist = float('inf')
             for ind1,i in enumerate(self.rep_points):
                 for ind2,j in enumerate(another_cluster.rep_points):
+                    dist_i_j = fast_dist(i,j,L=L,cov_i=cov_i)
                     
-                    if ind1 == 0 and ind2 == 0:
-                        min_dist = calc_dist(i,j,L=L,cov_i=cov_i)
+                    # if linkage == 'cure_complete':
+                    #     if dist_i > min_dist:
+                    #         min_dist = dist_i
                     
-                    dist_i = calc_dist(i,j,L=L,cov_i=cov_i)
+                    # elif linkage == 'cure_average':
+                    #     if ind1 == 0 and ind2 == 0:
+                    #         min_dist = 0
+                    #     min_dist += dist_i/num_dists 
                     
-                    if linkage == 'cure_complete':
-                        if dist_i > min_dist:
-                            min_dist = dist_i
-                    
-                    elif linkage == 'cure_average':
-                        if ind1 == 0 and ind2 == 0:
-                            min_dist = 0
-                        min_dist += dist_i/num_dists 
-                    
-                    else: # 'cure_single' or others
-                        if dist_i < min_dist:
-                            min_dist = dist_i
+                    # else: # 'cure_single' or others 
+                    if dist_i_j < min_dist:
+                        min_dist = dist_i_j
         return min_dist
     
-    def closest_cluster(self,tree,L,cov_i):
+    def closest_cluster(self,tree,distance):
+        '''
+        Don't use this - inaccurate
+        '''
         # Find one more closest point than the representative points in the cluster
         # to make sure at least one another cluster's rep point will be found
-        K = len(self.rep_points) + 1
+        #Find K + 1
+        # K = len(self.rep_points) + 1
+        
+        # nearest_cluster = None
+        # nearest_distance = float('inf')
+
+        # for rep_point in self.rep_points:
+        #     # Nearest nodes should be returned (at least it will return itself).
+        #     nearest_nodes = tree.search_knn(rep_point, K)
+        #     for (kdtree_node,candidate_distance) in nearest_nodes:
+        #         if (candidate_distance < nearest_distance) and (kdtree_node is not None) and (kdtree_node.payload is not self):
+        #             nearest_distance = candidate_distance
+        #             nearest_cluster = kdtree_node.payload
+                    
+        # return (nearest_cluster, nearest_distance)
+        
         
         nearest_cluster = None
         nearest_distance = float('inf')
 
-        for rep_point in self.rep_points:
+        real_distance = distance ** 0.5 # square root
+        # real_distance = self.distance ** 0.5 # square root
+        for point in self.rep_points:
             # Nearest nodes should be returned (at least it will return itself).
-            nearest_nodes = tree.search_knn(rep_point, K, L, cov_i)
-            for (kdtree_node,candidate_distance) in nearest_nodes:
+            nearest_nodes = tree.find_nearest_dist_nodes(point, real_distance)
+            for (candidate_distance, kdtree_node) in nearest_nodes:
                 if (candidate_distance < nearest_distance) and (kdtree_node is not None) and (kdtree_node.payload is not self):
                     nearest_distance = candidate_distance
                     nearest_cluster = kdtree_node.payload
                     
         return (nearest_cluster, nearest_distance)
-
+        
     @staticmethod
     def visualize_cluster(clusters):
         '''
@@ -206,10 +219,6 @@ class Cure():
         self.num_reps_ = None 
           
     def create_tree(self):
-        if self.L!=1 and self.L!=2:
-            # Or change it to minority class
-            self.cov_i = calc_cov_i(self.data)
-        
         representatives, payloads = [], []
         for cluster in self.queue:
             for rep in cluster.rep_points:
@@ -220,6 +229,10 @@ class Cure():
         self.tree = kdtree_(representatives,payloads=payloads,cov_i=self.cov_i)
         
     def create_queue(self):
+        
+        if self.L!=1 and self.L!=2:
+                # Or change it to minority class
+            self.cov_i = calc_cov_i(self.data)
         # each point in one cluster
         self.queue = [Cluster(i,self.data[i],1) for i in range(len(self.data))]
         
@@ -248,7 +261,9 @@ class Cure():
          
     def remove_rep(self,cluster):
         for rep_point in cluster.rep_points:
-            self.tree.remove(rep_point, payload=cluster)
+            res = self.tree.remove(rep_point, payload=cluster)
+        if res is None:
+            print('Remove failed')
             
     def insert_rep(self,cluster):
         for rep_point in cluster.rep_points:
@@ -331,14 +346,14 @@ class Cure():
                         # original closest distance < new distance to merged cluster 
                         # find other clusters with the distance in the interval [original closest distance,new distance to merged cluster]
                         if item.distance < distance: 
-                            (item.closest, item.distance) = item.closest_cluster(self.tree,self.L,self.cov_i)
+                            (item.closest, item.distance) = item.closest_cluster(self.tree,distance)
 
                             # TODO: investigation is required. There is assumption that itself and merged cluster
                             # should be always in list of neighbors in line with specified radius. But merged cluster
                             # may not be in list due to error calculation, therefore it should be added manually.
-                            # if item.closest is None: 
-                            #     item.closest = merged_cluster
-                            #     item.distance = distance
+                            if item.closest is None: 
+                                item.closest = merged_cluster
+                                item.distance = distance
 
                         else: # original closest distance > new distance to merged cluster -> No other cluster can be closer
                             item.closest = merged_cluster

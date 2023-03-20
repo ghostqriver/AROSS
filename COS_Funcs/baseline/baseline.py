@@ -1,27 +1,22 @@
 
-# import COS_Funcs.metrics as M
+from COS_Funcs.utils import *
+from COS_Funcs.baseline.classifier import do_classification
+import COS_Funcs.baseline.metrics as M
+from COS_Funcs.baseline.GANs.oversampler import WGAN
 # import COS_Funcs.visualize as V
 # import COS_Funcs.cos as cos
 # import COS_Funcs.generate as G
 
-import metrics as M
-import visualize as V
-import cos as cos
-import generate as G
+# import metrics as M
+# import visualize as V
+# import cos as cos
+# import generate as G
 
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE,SVMSMOTE,ADASYN
 from imblearn.combine import SMOTETomek,SMOTEENN
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.ensemble import RandomForestClassifier
-
-from smote_variants import (DBSMOTE,DSMOTE,SMOTE_D,CURE_SMOTE,kmeans_SMOTE,SOMO,NRAS,SYMPROD)
-from dtosmote.dto_smote import DTO
+from smote_variants import (DBSMOTE,DSMOTE,SMOTE_D,CURE_SMOTE,kmeans_SMOTE,SOMO,NRAS,SYMPROD,G_SMOTE,RWO_sampling,ANS)
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -30,93 +25,22 @@ import warnings
 import time
 import os
 import math
+import glob
 from tqdm import tqdm
+import copy
 
 # Global variables
-dataset_path = 'Dataset/'
-datasets = [
-            'Sampledata_new_1',
-            'Sampledata_new_2',
-            'Sampledata_new_3',
-            'Sampledata1',
-            'yeast',
-            'pima-indians-diabetes',
-            'ecoli2',
-            'glass1']
+dataset_path = 'Datasets/'
+datasets = glob.glob(os.path.join(dataset_path,'*.csv'))
 
-# datasets = [
-#             # 'abalone4–8',
-#             # 'abalone5–10',
-#             'ecoli2',
-#             # 'eligibility-loan',
-#             # 'glass0123vs456',
-#             'glass1',
-#             # 'leaf',
-#             # 'Maternal-Risk-lmvsh',
-#             # 'page-blocks1vs2345',
-#             # 'pima-indians-diabetes',
-#             'Sampledata1',
-#             'Sampledata_new_1',
-#             'Sampledata_new_2',
-#             'Sampledata_new_3',
-#             # 'seeds',
-#             # 'wheat1',
-#             # 'winequality-red-3456vs78',
-#             # 'winequality-red-34vs56',
-#             'yeast']
-
-
-models = ['original','smote',
-        'db_smote'
-        #   ,'smote_d'
-        ,'cure_smote',
-        'kmeans_smote'
-        #   ,'adasyn','somo','symprod'
-          #,
-        # 'cos'
-        ] 
-        # 'smote_enn',
-        # 'smote_tl','d_smote','nras' was moved
-        # 'dto_smote' can not worked on 'Sampledata1'
-
-
-def calc_score(metric,y_test,y_pred,pos_label):
-    '''
-    Works only in binary classification case because in COS_Funcs.metrics we only considered about binary cases
-    g_mean function is from COS_Funcs.metrics, all others are from sklearn.metrics
-    if the value of metric is not in ['recall','f1_score','g_mean','kappa','auc','accuracy','precision'],
-    it will return the Recall value by default
+models = [
+    # 'original','smote','db_smote','smote_d','cure_smote','kmeans_smote','adasyn','somo','symprod',
+        # 'smote_enn','smote_tl','d_smote','nras','g_smote','rwo_sampling','ans','svm_smote',
+        'wgan','wgan_filter'
+         # 'cos'
+         ] 
     
-    pos_label: the positive label, should be set as the minority label in our case
-    '''
-    
-    if metric == 'recall':
-        return metrics.recall_score(y_test,y_pred,pos_label=pos_label)
-    
-    elif metric == 'f1_score':
-        return metrics.f1_score(y_test,y_pred,pos_label=pos_label)
-    
-    elif metric == 'g_mean':
-        return M.g_mean(y_test,y_pred,pos_label=pos_label)
-    
-    elif metric == 'kappa':
-        return metrics.cohen_kappa_score(y_test,y_pred)
-    
-    elif metric == 'auc':
-        # Put the auc here when getting what it is 
-        return None
-    
-    elif metric == 'accuracy':
-        return metrics.accuracy_score(y_test,y_pred)
-    
-    elif metric == 'precision':
-        return metrics.precision_score(y_test,y_pred,pos_label=pos_label)
-    
-    else:
-        return metrics.recall_score(y_test,y_pred,pos_label=pos_label)
-    
-    
-def oversampling(model,X_train,y_train,*args): # !!!! Donia
+def oversampling(model,X_train,y_train,*args): 
     
     if model == 'original':
         return X_train,y_train
@@ -125,6 +49,10 @@ def oversampling(model,X_train,y_train,*args): # !!!! Donia
         smote = SMOTE()
         return smote.fit_resample(X_train,y_train)
     
+    elif model == 'svm_smote':
+        svmsmote = SVMSMOTE()
+        return svmsmote.fit_resample(X_train,y_train)
+        
     elif model == 'smote_enn':
         smoteenn = SMOTEENN()
         return smoteenn.fit_resample(X_train,y_train)
@@ -168,10 +96,21 @@ def oversampling(model,X_train,y_train,*args): # !!!! Donia
     elif model == 'symprod':
         symprod = SYMPROD()
         return symprod.sample(X_train,y_train)
+
+    elif model == 'g_smote':
+        gsmote = G_SMOTE()
+        return gsmote.sample(X_train,y_train)
+
+    elif model == 'rwo_sampling':
+        rwo = RWO_sampling()
+        return rwo.sample(X_train,y_train)
     
-    elif model == 'dto_smote':
-        delaunay = DTO('test','solid_angle',7.5)
-        return delaunay.fit_resample(X_train,y_train)
+    elif model == 'ans':
+        ans = ANS()
+        return ans.sample(X_train,y_train)
+    
+    elif model == 'wgan':
+        return WGAN(X_train,y_train)
     
     elif model == 'cos':
         N,c,alpha,linkage,L,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize = get_cos_para(args[0])
@@ -179,58 +118,18 @@ def oversampling(model,X_train,y_train,*args): # !!!! Donia
     
     else:
         return 0
-    
-    
-def do_classification(X_train,y_train,X_test,classification_model):
-    
-    if classification_model == 'knn':
-        model = KNeighborsClassifier()
-       
-    
-    elif classification_model == 'svm':
-        model = SVC()
-        
-    elif classification_model == 'decision_tree':
-        model = DecisionTreeClassifier()
-    
-    elif classification_model == 'random_forest':
-        model = RandomForestClassifier()
-    
-    elif classification_model == 'neural_network':
-        model = MLPClassifier()
-    
-    elif classification_model == 'c_classifier':
-        pass
-    
-    model.fit(X_train,y_train)
-    return model.predict(X_test)
-
-
-def read_data(dataset_path,dataset):
-    df = pd.read_csv(dataset_path+dataset+'.csv')
-    
-     # All dataset frame should in the format that the final column should be the labels
-    X = df.values[:,:-1]
-    y = df.values[:,-1]
-    
-    # Data preprocessing
-    ss = StandardScaler()
-    X = ss.fit_transform(X)
-    
-    return X,y
-
 
 def check_dir(dir):
     if not os.path.exists(dir.split('/')[0]):
         os.mkdir(dir.split('/')[0])
         
-
 def gen_df(models,datasets,avg_scores):
-    avg_scores_df = pd.DataFrame(columns=models+['all safe area','half safe area'],index=datasets)
+    # avg_scores_df = pd.DataFrame(columns=models+['all safe area','half safe area'],index=datasets)
+    avg_scores_df = pd.DataFrame(columns=models,index=datasets)
+
     for index,i in zip(avg_scores_df.index,range(len(avg_scores))):
         avg_scores_df.loc[index] = avg_scores[i]
     return avg_scores_df
-
 
 def get_cos_para(args):
     
@@ -322,75 +221,100 @@ def gen_file_name(args):
     else:
         fn = fn + 'half_safe_genSMOTE' + '_'
     return fn
-    
+
+def base_name(metric,classification_model,k):
+    return metric+'_'+classification_model+'_k'+str(k)+'.xlsx'
 
 def baseline(metric,classification_model,k=10,pos_label=None,excel_name=None,show_folds=False,dataset_path=dataset_path,datasets=datasets,**args):
     '''
     '''
+    print(args)
     pd.set_option('precision',5)  
     pd.set_option('display.width', 100)
     pd.set_option('expand_frame_repr', False)
     warnings.filterwarnings("ignore") 
     
-    path = 'baselines/'
+    path = 'test/'
     check_dir(path)
     
     if excel_name == None:
        
         # version = time.strftime('%m%d_%H%M%S')
-        fn = gen_file_name(args)
-        excel_name = fn+metric+'_'+classification_model+'_k'+str(k)+'.xlsx'
-
-    writer = pd.ExcelWriter(path+excel_name)
+        # fn = gen_file_name(args)
+        # excel_name = fn+metric+'_'+classification_model+'_k'+str(k)+'.xlsx'
+        excel_name = base_name(metric,classification_model,k)
+        
+    writer = pd.ExcelWriter(os.path.join(path+excel_name))
     
     for random_state in tqdm(range(k)):
         
-        scores_df = pd.DataFrame(columns=models+['all safe area','half safe area'],index=datasets)
+        # scores_df = pd.DataFrame(columns=models+['all safe area','half safe area'],index=datasets)
+        scores_df = pd.DataFrame(columns=models,index=datasets)
         
         for dataset in datasets: 
-
-            # print(dataset)
+            
+            # for classificaion_model in classfication_models:
+            # for metric in metrics:
+            print(dataset)
             scores = [] 
 
             for model in models:
 
-                X,y = read_data(dataset_path,dataset)
+                X,y = read_data(dataset)
 
-                X_train,X_test,y_train,y_test = train_test_split(X,y,stratify=y,random_state=random_state)
+                X_train,X_test,y_train,y_test = split_data(X,y,random_state=None)
 
                 # if pos_label == None:
-                pos_label = cos.get_labels(y_test)[0]
+                pos_label = get_labels(y_test)[0]
+                
+                try:
+                    
+                    if model == 'cos':
+                        X_train,y_train,num_all_safe,num_half_safe = oversampling(model,X_train,y_train,args) 
+                        
+                    elif model == 'wgan':
+                        pass
+                        # X_train,y_train,X_train_f,y_train_f = 
+                    elif model == 'wgan_filter':
+                        pass
+                        # X_train,y_train = X_train_f,y_train_f
+                    else:
+                        X_train,y_train = oversampling(model,X_train,y_train,args) 
+                                
+                    y_pred = do_classification(X_train,y_train,X_test,classification_model)
 
-                if model == 'cos':
-                    X_train,y_train,num_all_safe,num_half_safe = oversampling(model,X_train,y_train,args['args']) # Donia
-                else:
-                    X_train,y_train = oversampling(model,X_train,y_train,args['args']) # Donia
-
-                y_pred = do_classification(X_train,y_train,X_test,classification_model)
-
-                scores.append(calc_score(metric,y_test,y_pred,pos_label))
-
+                    scores.append(M.calc_score(metric,y_test,y_pred,pos_label))
+                    
+                except BaseException as e: 
+                    scores.append(None)
+                    continue
+                                    
                 if model == 'cos':
                     scores.append(num_all_safe)
                     scores.append(num_half_safe)
 
             scores_df.loc[dataset] = scores
         
+        tmp_df = copy.deepcopy(scores_df)
+        tmp_df.fillna(0)
         if random_state == 0:
-            avg_scores = scores_df.values
+            avg_scores = tmp_df.values
         else:
-            avg_scores += scores_df.values
+            avg_scores += tmp_df.values
         
         if show_folds == True:
             print(random_state+1,'fold:')
             print(scores_df)
             
+        scores_df.columns = list(map(lambda x:str.upper(x),models))
+        scores_df.index = list(map(lambda x:os.path.basename(x).split('.')[0],datasets))
         scores_df.to_excel(writer,sheet_name= 'fold_'+str(random_state+1))
         
     avg_scores = avg_scores/k
     
     avg_scores_df = gen_df(models,datasets,avg_scores)
-    
+    avg_scores_df.columns = list(map(lambda x:str.upper(x),models))
+    avg_scores_df.index = list(map(lambda x:os.path.basename(x).split('.')[0],datasets))
     avg_scores_df.to_excel(writer,sheet_name= 'avg')
     writer.save()
     print("The scores in each fold stored in",path+excel_name)
@@ -421,11 +345,11 @@ def show_baseline(dataset,random_state=None,pos_label=None,img_name=None,**args)
     
     for ind,model in enumerate(models):
 
-        X,y = read_data(dataset_path,dataset)
+        X,y = read_data(dataset)
 
         X_train,X_test,y_train,y_test = train_test_split(X,y,stratify=y,random_state=random_state)
 
-        pos_label = cos.get_labels(y_test)[0]
+        pos_label = get_labels(y_test)[0]
         if model == 'cos':
             X_oversampled,y_oversampled,_,_ = oversampling(model,X_train,y_train,args['args']) 
         else:
@@ -447,16 +371,14 @@ def show_baseline_cos(dataset,random_state=None,pos_label=None,**args):
 
     args['args']['visualize'] = True
 
-    X,y = read_data(dataset_path,dataset)
+    X,y = read_data(dataset)
 
     X_train,X_test,y_train,y_test = train_test_split(X,y,stratify=y,random_state=random_state)
 
-    pos_label = cos.get_labels(y_test)[0]
+    pos_label = get_labels(y_test)[0]
 
     X_oversampled,y_oversampled,_,_ = oversampling(model,X_train,y_train,args['args'])
 
     plt.show()
     
 
-# def baseline_para_choose():
-#     pass

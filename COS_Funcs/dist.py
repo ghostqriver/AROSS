@@ -21,7 +21,7 @@ def mahalanobis_distance_square(x,y,cov_i):
     # The fase mode for saving time in CURE
     if cov_i is None:
         raise BaseException('cov_i is None')
-    delta = x - y
+    delta = np.subtract(x,y)
     m = np.dot(np.dot(delta, cov_i), delta)
     return m
     

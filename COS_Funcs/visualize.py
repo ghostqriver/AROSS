@@ -7,18 +7,22 @@ note:   because we always run the COS in the notebook(automatically show the fig
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-# from . import cos
-# from . import generate as G
-import generate as G
-import cos
+from . import cos
+from . import generate as G
+# import generate as G
+# import cos
 
 
-def show_2d_scatter(X,y,minlabel=None,majlabel=None):
+def show_2d_scatter(X,y=None,minlabel=None,majlabel=None):
     '''
     Show the scatter for a 2d(only two features, and features should be floats) dataset, unlimited for labels
     X: the value of data, in the n*2 np.array commonly
     y: labels of the dataset, in the 1d np.array commonly 
     '''
+    if y is None: 
+        plt.scatter(X[:,0],X[:,1],marker='.',c='k')
+        plt.show()
+        return 
     if minlabel == None and majlabel ==None:
         minlabel,majlabel = cos.get_labels(y)
     plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker='*',c='blue',label='minority class')

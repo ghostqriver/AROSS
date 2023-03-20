@@ -1,14 +1,43 @@
-'''
-This is the implementation of metrics we will use, the main implementation is the g_mean which wasn't implemented in sklearn.metrics.
-Other implementations mainly use for test and checking the score.
+import COS_Funcs.cos as cos
+from COS_Funcs.utils import *
 
-'''
-
+from sklearn import metrics
 import numpy as np
-# import COS_Funcs.cos as cos
-import cos as cos
 
-
+def calc_score(metric,y_test,y_pred,pos_label):
+    '''
+    @ Works only in binary classification case.
+    @ metric: ['recall','f1_score','g_mean','kappa','auc','accuracy','precision'], for any other values it will return the Recall value by default
+    @ pos_label: the positive label, should be set as the minority label in our case
+    '''
+    
+    if metric == 'recall':
+        return metrics.recall_score(y_test,y_pred,pos_label=pos_label)
+    
+    elif metric == 'f1_score':
+        return metrics.f1_score(y_test,y_pred,pos_label=pos_label)
+    
+    elif metric == 'g_mean':
+        return g_mean(y_test,y_pred,pos_label=pos_label)
+    
+    elif metric == 'kappa':
+        return metrics.cohen_kappa_score(y_test,y_pred)
+    
+    elif metric == 'auc':
+        return auc(y_test,y_pred,pos_label=pos_label)
+    
+    elif metric == 'accuracy':
+        return metrics.accuracy_score(y_test,y_pred)
+    
+    elif metric == 'precision':
+        return metrics.precision_score(y_test,y_pred,pos_label=pos_label)
+    
+    else:
+        return metrics.recall_score(y_test,y_pred,pos_label=pos_label)
+    
+def auc(y_test,y_pred,pos_label=None):
+    fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=pos_label)
+    return metrics.auc(fpr, tpr)
 
 def confusion_matrix(y_test,y_pred,pos_label=None):
     '''
@@ -16,7 +45,7 @@ def confusion_matrix(y_test,y_pred,pos_label=None):
     pos_label: the positive class(minority class)'s label
     '''
     if pos_label == None:
-        pos_label = cos.get_labels(y_test)[0]
+        pos_label = get_labels(y_test)[0]
         
     TP = 0
     TN = 0

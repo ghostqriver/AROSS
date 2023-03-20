@@ -1,10 +1,9 @@
-
-
 from pyclustering.container.kdtree import kdtree,node,kdtree_balanced
 from pyclustering.utils import find_left_element
 import operator
-# from COS_Funcs.dist import calc_cov_i,calc_dist
-from dist import calc_cov_i,calc_dist
+from COS_Funcs.dist import calc_cov_i,calc_dist,fast_dist
+# from dist import calc_cov_i,calc_dist
+
 COMPARE_CHILD = {
     0: (operator.le, operator.sub),
     1: (operator.ge, operator.add),
@@ -103,7 +102,7 @@ class kdtree_node(node):
     
 class kdtree_(kdtree):  
     
-    def __init__(self, points, payloads=None, cov_i=None):
+    def __init__(self, points, payloads=None, cov_i=None, L=2):
         """!
         @brief Initializes balanced static KD-tree.
         @param[in] points (array_like): Points that should be used to build KD-tree.
@@ -129,8 +128,12 @@ class kdtree_(kdtree):
             nodes.append(kdtree_node(points[i], payload, None, None, -1, None))
 
         self._root = self.__create_tree(nodes, None, 0)
+        self.L = L
         if cov_i is None:
             self.cov_i = calc_cov_i(points)
+        else:
+            self.cov_i = cov_i
+
     
     def __create_tree(self, nodes, parent, depth):
         """!
@@ -207,11 +210,36 @@ class kdtree_(kdtree):
                     return cur_node.left
                 else:
                     cur_node = cur_node.left
+    def  find_nearest_dist_nodes(self, point, distance):
+        best_nodes = []
+        if self._root is not None:
+            self.recursive_nearest_nodes(point, distance, distance * distance, self._root, best_nodes)
+        return best_nodes
+
+    def recursive_nearest_nodes(self, point, distance, sqrt_distance, node_head, best_nodes):
+
+        if node_head.right is not None:
+            minimum = node_head.data[node_head.disc] - distance
+            if point[node_head.disc] >= minimum:
+                self.recursive_nearest_nodes(point, distance, sqrt_distance, node_head.right, best_nodes)
+
+        if node_head.left is not None:
+            maximum = node_head.data[node_head.disc] + distance
+            if point[node_head.disc] < maximum:
+                self.recursive_nearest_nodes(point, distance, sqrt_distance, node_head.left, best_nodes)
+
+        candidate_distance = fast_dist(point, node_head.data,self.L,self.cov_i)
+        if candidate_distance <= sqrt_distance:
+            best_nodes.append((candidate_distance, node_head))
+    
+    
+    def search_knn(self, point, k, L=None,cov_i=None):
         
-    def search_knn(self, point, k, L=2,cov_i=None):
-        
-        if cov_i is None:        
+        if L is None:
+            L = self.L
+        if cov_i is None:
             cov_i = self.cov_i
+            
         prev = None
         cur_node = self._root
 
