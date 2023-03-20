@@ -35,9 +35,9 @@ from tqdm import tqdm
 import copy
 
 def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversamplers,dataset_path=dataset_path,datasets=datasets,show_folds=False,**args):
-    pd.set_option('precision',5)  
-    pd.set_option('display.width', 100)
-    pd.set_option('expand_frame_repr', False)
+    #pd.set_option('precision',5)  
+    #pd.set_option('display.width', 100)
+    #pd.set_option('expand_frame_repr', False)
     warnings.filterwarnings("ignore") 
     
     if 'cos' in oversamplers:
