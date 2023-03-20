@@ -4,8 +4,55 @@ import tensorflow as tf
 import numpy as np
 from .WGAN import *
 from .TABGAN import *
+from .utils import *
 from COS_Funcs.utils import get_labels
 from COS_Funcs.baseline.classifier import do_classification
+
+def WGAN(X_train,y_train,target='label',classes=[0,1]):
+    
+    X_train,y_train = prepare_data(X_train,y_train)
+
+    X_sample=gen_data(X_train,y_train,target,classes)
+    X_train[target]=y_train
+    
+    X_sample=X_sample.append(X_train)
+    y_sample=X_sample[target]
+    X_sample=X_sample.drop(target,1)
+    return X_sample.values,y_sample.values
+
+def WGAN_filter(X_train,y_train,X_test,y_test,model,target='label',classes=[0,1]):
+    
+    X_train,y_train,X_test,y_test = prepare_data(X_train,y_train,X_test,y_test,target)
+    preds = do_classification(X_train,y_train,X_test,model)
+    init_error=error_per_class(y_test,preds,classes)
+    X_out=X_train.copy()
+    y_out=y_train.copy()
+    minclass = [get_labels(y_train)[0]]
+    X_train,y_train,X_test,y_test = prepare_data(X_train,y_train,X_test,y_test,target)
+    for c in classes:
+        error=init_error
+        ins=y_train.index[y_train==c].tolist()
+        print('GEN DATA FOR CLASS ', c)
+        X_gan= gen_data(X_train, pd.DataFrame(y_train),target,set([c])) #1
+        y_gan = pd.Series(X_gan[target]) #2
+        X_gan=X_gan.drop(target,1) #3
+        
+        X_filtered,y_filtered = filter_data(X_train,y_train,X_gan,pd.Series(y_gan),
+                                          X_test,init_error,c,y_test,classes)
+#         X_out=X_out.append(pd.DataFrame(X_filtered))
+#         y_out=pd.concat([pd.DataFrame(y_out,columns=[target]),
+#                        pd.DataFrame(y_filtered,columns=[target])])
+#         y_out.reset_index(inplace=True,drop=True)
+#         X_out.reset_index(inplace=True,drop=True)
+#         X_gan=X_filtered.append(pd.DataFrame(X_train))
+#         y_gan=pd.concat([pd.DataFrame(y_filtered,columns=[target]),
+#                        pd.DataFrame(y_train)])
+#         clf_model=get_model(X_gan,y_gan.astype('int'))
+#         preds = clf_model.predict(X_test)
+#         error=error_per_class(y_test,preds,classes)
+#         y_gan.reset_index(inplace=True,drop=True)
+#         X_gan.reset_index(inplace=True,drop=True)
+
 
 def generate_synthetic_samples(generator,class_id,headers_name,nb_instance,NOISE_DIM):
     # generete instances
@@ -95,26 +142,10 @@ def gen_data(X_train,y_train,target,classes):
             syhtnetic_data[target]=c
             new_data=new_data.append(syhtnetic_data)
     return new_data
-
-
-def WGAN(X_train,y_train,target='label',classes=[0,1]):
     
-    X_train,y_train = prepare_data(X_train,y_train)
 
-    X_sample=gen_data(X_train,y_train,target,classes)
-    X_train[target]=y_train
-    
-    X_sample=X_sample.append(X_train)
-    y_sample=X_sample[target]
-    X_sample=X_sample.drop(target,1)
-    return X_sample.values,y_sample.values
 
-def WGAN_filter(,model):
-     clf_model=get_model(X_train,y_train)
-    preds = clf_model.predict(X_test)
-#     print_eval_results(y_test, preds)
-#     #initial error_rate per class
-#     init_error=error_per_class(y_test,preds,classes)
+
 def TABGAN(X_train, y_train, X_test,y_test,target='label',minclass=[1]):
     minclass = [get_labels(y_train)[0]]
     X_train,y_train,X_test,y_test = prepare_data(X_train,y_train,X_test,y_test,target)

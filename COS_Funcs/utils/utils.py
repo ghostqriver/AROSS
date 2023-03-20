@@ -1,6 +1,8 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+import glob
+import os
 
 def read_data(dataset,norm=True):
     df = pd.read_csv(dataset)
@@ -35,3 +37,7 @@ def split_data(X,y,random_state=None):
     @  Return: X_train,X_test,y_train,y_test
     '''
     return train_test_split(X,y,stratify=y,random_state=random_state,)
+
+
+
+    
