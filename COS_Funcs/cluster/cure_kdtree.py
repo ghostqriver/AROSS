@@ -1,5 +1,6 @@
 """
-@author: wangyizhi
+@brief CURE's kd tree implementation
+@details Faster than cure, cure_single with L=2 and L=3 are implemented
 @reference: https://github.com/annoviko/pyclustering/blob/bf4f51a472622292627ec8c294eb205585e50f52/pyclustering/cluster/cure.py
 """
 
@@ -7,12 +8,9 @@ import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt
 import time,os
-from COS_Funcs.dist import calc_cov_i,calc_dist,fast_dist
-from COS_Funcs.kdtree import kdtree_
-from . import visualize as V
-# from dist import calc_cov_i,calc_dist
-# from kdtree import kdtree_
-# import visualize as V
+from COS_Funcs.utils.dist import calc_cov_i,fast_dist
+from COS_Funcs.cluster.kdtree import kdtree_
+from COS_Funcs.utils import visualize as V
 
 
 class Cluster:

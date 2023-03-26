@@ -1,18 +1,27 @@
-"""
+'''
+@brief CURE's brute force implementation (use the fast_dist)
+@details Faster than cure_bf, cure_single cure_complete cure_average and cure_centroid centroid with L=2 and L=3 are implemented
 
-@author: wangyizhi
-"""
+@example  
+    from COS_Funcs.cluster import cure
+    from COS_Funcs.utils import read_data
+    from COS_Funcs.utils import visualize
+    
+    X,y = read_data('Datasets\\sampledata_new_3.csv')
+    num_expected_clusters = 30
+    c = 3
+    alpha = 0.5
+    linkage = 'cure_single' #/'cure_single'/'cure_complete'/'cure_average'/'cure_centroid' /'centroid'
+    L = 2 #/1/3
+    clusters,all_reps,num_reps = cure.Cure(X,num_expected_clusters,c,alpha,linkage='cure_single',L=2,visualize = False)
+'''
 import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt
-import time,os
-from COS_Funcs.dist import calc_cov_i,fast_dist#,calc_dist,
-from . import visualize as V
-# from dist import calc_cov_i,calc_dist
-# import visualize as V
+from COS_Funcs.utils.dist import calc_cov_i
+from COS_Funcs.utils.dist import fast_dist as calc_dist
+from COS_Funcs.utils import visualize as V
 
-calc_dist = fast_dist
-cov_i = None
 
 class Cluster:
     '''
@@ -62,7 +71,7 @@ class Cluster:
         '''
         self.rep_points = tmp_repset + alpha * (self.center - tmp_repset) # in np.array self.center - tmp_repset will be calculate as [self.center-tmp_repset[0],self.center-tmp_repset[1],self.center-tmp_repset[2]....]
     
-    def merge(self,another_cluster,c,alpha,L):
+    def merge(self,another_cluster,c,alpha,L,cov_i):
         '''
         Merge two cluster into one,
         firstly renew the parameters and center,
@@ -89,9 +98,8 @@ class Cluster:
                         maxDist = minDist
                 tmpSet.append(maxPoint)
         self.add_shrink(tmpSet,alpha)
-        
-        
-    def clus_dist(self,another_cluster,linkage='cure_single',L=2):
+          
+    def clus_dist(self,another_cluster,linkage,L,cov_i):
         '''
         Calculate the distance between two clusters
         linkage: 
@@ -169,11 +177,11 @@ class dist_matrix():
     The object of distance matrix during the CURE algorithm running
     .matrix    : the nxn distance matrix, n is the number of clusters in this iteratio
     '''
-    def __init__(self,X,linkage,L):
+    def __init__(self,X,linkage,L,cov_i):
         self.matrix = np.zeros([len(X),len(X)])
-        self.gen_matrix(X,linkage,L)
+        self.gen_matrix(X,linkage,L,cov_i)
         
-    def gen_matrix(self,X,linkage,L):
+    def gen_matrix(self,X,linkage,L,cov_i):
         
         for i in range(self.matrix.shape[0]):
             for j in range(self.matrix.shape[1]):
@@ -192,15 +200,15 @@ class dist_matrix():
         neighbor2 = neighbors[1][0]      
         return (neighbor1,neighbor2,min_dist)
       
-    def renew_matrix(self,clusters,neighbor1,neighbor2,linkage,L):
+    def renew_matrix(self,clusters,neighbor1,neighbor2,linkage,L,cov_i):
         '''
         Change the distance matrix information, calculate the distance use the representative pts
         '''
         for i in range(self.matrix.shape[0]):
             if i < neighbor1:
-                self.matrix[i,neighbor1] = clusters[neighbor1].clus_dist(clusters[i],linkage,L)
+                self.matrix[i,neighbor1] = clusters[neighbor1].clus_dist(clusters[i],linkage,L,cov_i)
             if i > neighbor1:
-                self.matrix[neighbor1,i] = clusters[neighbor1].clus_dist(clusters[i],linkage,L)
+                self.matrix[neighbor1,i] = clusters[neighbor1].clus_dist(clusters[i],linkage,L,cov_i)
         self.matrix = np.delete(self.matrix,neighbor2,axis=1)
         self.matrix = np.delete(self.matrix,neighbor2,axis=0)
     
@@ -246,12 +254,12 @@ def Cure(X,num_expected_clusters,c,alpha,linkage='cure_single',L=2,visualize = F
     '''
     clusters = Cluster.gen_clusters(X)
     
-    if L!=1 and L!=2:
+    cov_i = None
+    if L not in (1,2):
         # Or change it to minority class
-        global cov_i
         cov_i = calc_cov_i(X)
         
-    dist = dist_matrix(X,linkage,L)
+    dist = dist_matrix(X,linkage,L,cov_i)
     
     num_clusters = len(clusters)
         
@@ -263,9 +271,9 @@ def Cure(X,num_expected_clusters,c,alpha,linkage='cure_single',L=2,visualize = F
         if visualize == True:
             visualize_cure(clusters,dist,neighbor1,neighbor2,min_dist)
             
-        clusters[neighbor1].merge(clusters[neighbor2],c,alpha,L)
+        clusters[neighbor1].merge(clusters[neighbor2],c,alpha,L,cov_i)
         
-        dist.renew_matrix(clusters,neighbor1,neighbor2,linkage,L)
+        dist.renew_matrix(clusters,neighbor1,neighbor2,linkage,L,cov_i)
                
         # Drop the unused clusters' informations
         del(clusters[neighbor2])

@@ -1,12 +1,7 @@
-from . import cure
-from . import visualize as V
+from COS_Funcs.cluster import cure
+from COS_Funcs.utils import visualize as V
 from . import generate as G
-from . import clusterings as clusterings
-
-# import cure
-# import visualize as V
-# import generate as G
-# import clusterings as clusterings
+# from .. import clusterings as clusterings
 
 
 import numpy as np

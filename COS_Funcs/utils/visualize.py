@@ -7,10 +7,8 @@ note:   because we always run the COS in the notebook(automatically show the fig
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from . import cos
-from . import generate as G
-# import generate as G
-# import cos
+from COS_Funcs.cos import cos
+from COS_Funcs.cos import generate as G
 
 
 def show_2d_scatter(X,y=None,minlabel=None,majlabel=None):

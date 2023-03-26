@@ -40,6 +40,8 @@ def read_info(file_name):
     dict['minority_class'] = 'Class' + str(minlabel)
     dict['majority_class'] = 'Class' + str(majlabel)
     dict['num_of_attributes'] = len(df.columns) - 1
+    dict['num_of_rows'] = len(df)
+
     dict['num_of_minority_samples'] = len(y[y==minlabel])
     dict['num_of_majority_samples'] = len(y[y==majlabel])
     dict['imbalance_ratio'] = round(dict['num_of_majority_samples']/dict['num_of_minority_samples'],2)

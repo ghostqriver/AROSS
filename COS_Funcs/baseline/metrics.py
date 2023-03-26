@@ -1,4 +1,4 @@
-import COS_Funcs.cos as cos
+import COS_Funcs.cos.cos as cos
 from COS_Funcs.utils import *
 
 from sklearn import metrics
@@ -16,6 +16,8 @@ def calc_score(metric,y_test,y_pred,pos_label):
     
     elif metric == 'f1_score':
         return metrics.f1_score(y_test,y_pred,pos_label=pos_label)
+    elif metric == 'f2_score':
+        pass
     
     elif metric == 'g_mean':
         return g_mean(y_test,y_pred,pos_label=pos_label)

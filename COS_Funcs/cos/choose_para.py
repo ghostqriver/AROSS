@@ -1,6 +1,6 @@
 import COS_Funcs.baseline as baseline
-import COS_Funcs.cos as cos
-import COS_Funcs.generate as G
+import COS_Funcs.cos.cos as cos
+import COS_Funcs.cos.generate as G
 
 # import baseline as baseline
 # import cos as cos

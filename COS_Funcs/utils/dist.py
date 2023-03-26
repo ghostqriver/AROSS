@@ -9,12 +9,9 @@ def calc_cov_i(data):
     cov_i = np.linalg.inv(cov)
     return cov_i
     
-def mahalanobis(x,y,data=None,cov_i=None):
-    if cov_i is None:
-        if data is None:
-            raise BaseException('When the cov_i is None, the data can not be None')
-        else:
-            cov_i = calc_cov_i(data)
+def mahalanobis(x,y,cov_i=None):
+    if cov_i is None: 
+        raise BaseException('cov_i is None')
     return distance.mahalanobis(x,y,cov_i)
 
 def mahalanobis_distance_square(x,y,cov_i):
@@ -31,16 +28,16 @@ def euclidean(x,y):
 def manhantan(x,y):
     return np.abs(x - y).sum()
 
-def calc_dist(x,y,L=2,data=None,cov_i=None):
+def calc_dist(x,y,L,cov_i=None):
     
     if L == 1:
         return manhantan(x,y)
     if L == 2:
         return euclidean(x,y)
     
-    return mahalanobis(x,y,data=data,cov_i=cov_i)
+    return mahalanobis(x,y,cov_i=cov_i)
 
-def fast_dist(x,y,L=2,cov_i=None):
+def fast_dist(x,y,L,cov_i=None):
     # Fast mode
     if L == 1:
         return manhantan(x,y)
