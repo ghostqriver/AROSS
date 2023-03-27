@@ -6,3 +6,4 @@ pyclustering
 kneed
 tabgan
 openpyxl
+colorir

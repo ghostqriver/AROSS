@@ -1,67 +1,94 @@
-'''
-For visualizing the dataset during the steps of COS
-note:   because we always run the COS in the notebook(automatically show the figure without plt.show()), and there are some functions called by other visualization functions as a subplot
-        in some functions there is not plt.show() after draw the figure, please modify the function or call the plt.show() in your own code line. 
-'''
+figsize = (7,6)
+
+rep_color = 'k'
+rep_mark = 'x'
+rep_label = 'representative points'
+rep_size = 35
+
+min_mark = '.'
+min_size = 50
+min_color ='blue'
+min_label = 'minority class'
+   
+maj_mark = '.'
+maj_size = 40
+maj_color = 'gray'
+maj_label = 'majority class'
+
+point_mark = '.'
+point_size = 40
+point_colors = ['#1F77B4',
+                '#FF7F0E',
+                '#2CA02C',
+                '#D62728',
+                '#9467BD',
+                '#8C564B',
+                '#E377C2',
+                '#7F7F7F',
+                '#BCBD22',
+                '#17BECF']
+
+alpha = 0.8
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import itertools
+import colorir
 from COS_Funcs.cos import cos
 from COS_Funcs.cos import generate as G
 
 
-def show_2d_scatter(X,y=None,minlabel=None,majlabel=None):
+def show_2d_scatter(X,y=None):
     '''
-    Show the scatter for a 2d(only two features, and features should be floats) dataset, unlimited for labels
-    X: the value of data, in the n*2 np.array commonly
-    y: labels of the dataset, in the 1d np.array commonly 
+    @brief Show the scatter for a 2D dataset
     '''
     if y is None: 
-        plt.scatter(X[:,0],X[:,1],marker='.',c='k')
+        plt.scatter(X[:,0],X[:,1],marker=maj_mark,c=maj_color)
         plt.show()
         return 
-    if minlabel == None and majlabel ==None:
-        minlabel,majlabel = cos.get_labels(y)
-    plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker='*',c='blue',label='minority class')
-    plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker='.',c='k',label='majority class')
+    minlabel,majlabel = cos.get_labels(y)
+    plt.figure(figsize=figsize)
+    plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
+    plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size)
     plt.legend()
     # plt.show()
 
-
 def show_clusters(clusters):
     '''
-    Show the scatter for a 2d dataset's cluster result
-    clusters: the cluster object list from the CURE
+    @brief Show the clustering result 2D dataset
+    @para 
+        clusters: the list contain cluster objects
     '''
-    # plt.figure(figsize=(10,10))
-    color_list = list(color_dict.keys())
-    mod_ = len(color_list)
-    for ind,cluster in enumerate(clusters):
+    plt.figure(figsize=figsize)
+    point_colors_ = itertools.cycle(point_colors)
+    for cluster in clusters:
+        point_color = next(point_colors_)
+        rep_color = colorir.PolarGrad([point_color,'#000000'],)
+        rep_color = rep_color.n_colors(4)[1]
         points = np.array(cluster.points)
         rep_points = np.array(cluster.rep_points)
-        c_ind = (ind*3) % mod_
-        plt.scatter(points[:,0],points[:,1],marker='.',c=color_list[c_ind])
-        plt.scatter(rep_points[:,0],rep_points[:,1],marker='x',c=color_list[c_ind])
+        plt.scatter(points[:,0],points[:,1],marker=point_mark,c=point_color,s=point_size)
+        plt.scatter(rep_points[:,0],rep_points[:,1],marker=rep_mark,c=rep_color,s=rep_size)
     plt.title('clusters')
     # plt.show()
 
-
 def show_rep_points(X,y,clusters):
     '''
-    Show the scatter for a 2d(only two features, and features should be floats) dataset, and all representative points get from the CURE algorithm
-    X: the value of data, in the n*2 np.array commonly
-    y: labels of the dataset, in the 1d np.array commonly 
-    clusters: the cluster object list from the CURE
+    @brief Show the representative points on the 2D dataset
     '''
-    labels = set(list(y))
-    for label in labels:
-        plt.scatter(X[y==label,0],X[y==label,1])
+    minlabel,majlabel = cos.get_labels(y)
+    plt.figure(figsize=figsize)
+    plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
+    plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size)
+    
     for cluster in clusters:
         if len(cluster.rep_points) > 0:
             rep_points = np.array(cluster.rep_points)
-            plt.scatter(rep_points[:,0],rep_points[:,1],marker='x',c='k')
-    plt.title('representative points')
+            plt.scatter(rep_points[:,0],rep_points[:,1],marker=rep_mark,c=rep_color,s=rep_size,alpha=alpha)
+    plt.scatter(rep_points[0,0],rep_points[0,1],marker=rep_mark,c=rep_color,label=rep_label,s=rep_size)      
+    plt.legend()
+
     # plt.show()
 
 
@@ -90,8 +117,8 @@ def show_areas(X,y,min_all_safe_area,min_half_safe_area,minlabel=None,majlabel=N
 
     plt.figure(figsize=(10,10))
     # The original dataset
-    plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker='*',c='blue',label='minority class')
-    plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker='.',c='k',label='majority class')
+    plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
+    plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size)
 
     # The areas
     plt.plot(X[0,0],X[0,1], c='k',label='all safe area')
@@ -100,7 +127,7 @@ def show_areas(X,y,min_all_safe_area,min_half_safe_area,minlabel=None,majlabel=N
     for area in min_all_safe_area:
         radius = area.radius
         rep_point = area.rep_point
-        plt.scatter(rep_point[0],rep_point[1],c='black',marker='x')
+        plt.scatter(rep_point[0],rep_point[1],marker=rep_mark,c=rep_color,label=rep_label,s=rep_size) 
         
         #draw the circle
         x = np.linspace(rep_point[0] - radius, rep_point[0] + radius, 5000)
@@ -113,7 +140,7 @@ def show_areas(X,y,min_all_safe_area,min_half_safe_area,minlabel=None,majlabel=N
     for area in min_half_safe_area:
         radius = area.radius
         rep_point = area.rep_point
-        plt.scatter(rep_point[0],rep_point[1],c='black',marker='x')
+        plt.scatter(rep_point[0],rep_point[1],marker=rep_mark,c=rep_color,label=rep_label,s=rep_size) 
         
         #draw the circle
         x = np.linspace(rep_point[0] - radius, rep_point[0] + radius, 5000)
@@ -242,100 +269,3 @@ def show_baselines_areas(file_name):
         ax2.legend(loc = 2)
         ax2.set_ylabel('score')
         plt.show()
-
-color_dict = {
-            'black':                '#000000',
-            'blue':                 '#0000FF',
-            'blueviolet':           '#8A2BE2',
-            'brown':                '#A52A2A',
-            'burlywood':            '#DEB887',
-            'cadetblue':            '#5F9EA0',
-            'chartreuse':           '#7FFF00',
-            'chocolate':            '#D2691E',
-            'coral':                '#FF7F50',
-            'cornflowerblue':       '#6495ED',
-            'crimson':              '#DC143C',
-            'cyan':                 '#00FFFF',
-            'darkblue':             '#00008B',
-            'darkcyan':             '#008B8B',
-            'darkgoldenrod':        '#B8860B',
-            'darkgray':             '#A9A9A9',
-            'darkgreen':            '#006400',
-            'darkkhaki':            '#BDB76B',
-            'darkmagenta':          '#8B008B',
-            'darkolivegreen':       '#556B2F',
-            'darkorange':           '#FF8C00',
-            'darkorchid':           '#9932CC',
-            'darkred':              '#8B0000',
-            'darksalmon':           '#E9967A',
-            'darkseagreen':         '#8FBC8F',
-            'darkslateblue':        '#483D8B',
-            'darkslategray':        '#2F4F4F',
-            'darkturquoise':        '#00CED1',
-            'darkviolet':           '#9400D3',
-            'deeppink':             '#FF1493',
-            'deepskyblue':          '#00BFFF',
-            'dodgerblue':           '#1E90FF',
-            'firebrick':            '#B22222',
-            'forestgreen':          '#228B22',
-            'fuchsia':              '#FF00FF',
-            'gainsboro':            '#DCDCDC',
-            'gold':                 '#FFD700',
-            'goldenrod':            '#DAA520',
-            'green':                '#008000',
-            'greenyellow':          '#ADFF2F',
-            'hotpink':              '#FF69B4',
-            'indianred':            '#CD5C5C',
-            'indigo':               '#4B0082',
-            'khaki':                '#F0E68C',
-            'lawngreen':            '#7CFC00',
-            'lime':                 '#00FF00',
-            'limegreen':            '#32CD32',
-            'magenta':              '#FF00FF',
-            'maroon':               '#800000',
-            'mediumaquamarine':     '#66CDAA',
-            'mediumblue':           '#0000CD',
-            'mediumorchid':         '#BA55D3',
-            'mediumpurple':         '#9370DB',
-            'mediumseagreen':       '#3CB371',
-            'mediumslateblue':      '#7B68EE',
-            'mediumspringgreen':    '#00FA9A',
-            'mediumturquoise':      '#48D1CC',
-            'mediumvioletred':      '#C71585',
-            'midnightblue':         '#191970',
-            'navy':                 '#000080',
-            'olive':                '#808000',
-            'olivedrab':            '#6B8E23',
-            'orange':               '#FFA500',
-            'orangered':            '#FF4500',
-            'orchid':               '#DA70D6',
-            'palegoldenrod':        '#EEE8AA',
-            'palegreen':            '#98FB98',
-            'paleturquoise':        '#AFEEEE',
-            'palevioletred':        '#DB7093',
-            'peachpuff':            '#FFDAB9',
-            'peru':                 '#CD853F',
-            'pink':                 '#FFC0CB',
-            'plum':                 '#DDA0DD',
-            'powderblue':           '#B0E0E6',
-            'purple':               '#800080',
-            'red':                  '#FF0000',
-            'rosybrown':            '#BC8F8F',
-            'royalblue':            '#4169E1',
-            'saddlebrown':          '#8B4513',
-            'salmon':               '#FA8072',
-            'sandybrown':           '#FAA460',
-            'seagreen':             '#2E8B57',
-            'sienna':               '#A0522D',
-            'skyblue':              '#87CEEB',
-            'slateblue':            '#6A5ACD',
-            'springgreen':          '#00FF7F',
-            'steelblue':            '#4682B4',
-            'tan':                  '#D2B48C',
-            'teal':                 '#008080',
-            'thistle':              '#D8BFD8',
-            'tomato':               '#FF6347',
-            'turquoise':            '#40E0D0',
-            'violet':               '#EE82EE',
-            'yellow':               '#FFFF00'
-            }
