@@ -29,13 +29,15 @@ point_colors = ['#1F77B4',
                 '#17BECF']
 
 alpha = 0.8
+all_safe_color = 'k'
+half_safe_color = 'brown'
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import itertools
 import colorir
-from COS_Funcs.cos import cos
+from COS_Funcs.cos import cos_bf
 from COS_Funcs.cos import generate as G
 
 
@@ -47,7 +49,7 @@ def show_2d_scatter(X,y=None):
         plt.scatter(X[:,0],X[:,1],marker=maj_mark,c=maj_color)
         plt.show()
         return 
-    minlabel,majlabel = cos.get_labels(y)
+    minlabel,majlabel = cos_bf.get_labels(y)
     plt.figure(figsize=figsize)
     plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
     plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size)
@@ -76,8 +78,10 @@ def show_clusters(clusters):
 def show_rep_points(X,y,clusters):
     '''
     @brief Show the representative points on the 2D dataset
+    @para 
+        clusters: the list contain cluster objects
     '''
-    minlabel,majlabel = cos.get_labels(y)
+    minlabel,majlabel = cos_bf.get_labels(y)
     plt.figure(figsize=figsize)
     plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
     plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size)
@@ -103,54 +107,54 @@ def show_clusters_rep_points(X,y,clusters):
     show_rep_points(X,y,clusters)
 
 
-def show_areas(X,y,min_all_safe_area,min_half_safe_area,minlabel=None,majlabel=None):
+def show_areas(X,y,min_all_safe_area,min_half_safe_area,):
     '''
-    Show the minority class's safe areas (black circle: all safe, brown circle: half safe)
-    X: the value of data, in the n*2 np.array commonly
-    y: labels of the dataset, in the 1d np.array commonly 
-    min_all_safe_area: the all safe Area instances list returned by cos.safe_areas() functions
-    min_half_safe_area:  the all safe Area instances list returned by cos.safe_areas() functions
-    minlabel,majlabel: given the label of minority class and majority class, if None will be set from the dataset automatically (only work in binary classification case)
+    @brief Show the areas (black circle: all safe, brown circle: half safe)
+    @para 
+        min_all_safe_area: the all safe Area list returned by cos.safe_areas() functions
+        min_half_safe_area: the all safe Area list returned by cos.safe_areas() functions
     '''
-    if minlabel == None and majlabel ==None:
-            minlabel,majlabel = cos.get_labels(y)
 
-    plt.figure(figsize=(10,10))
+    minlabel,majlabel = cos_bf.get_labels(y)
+
+    plt.figure(figsize=figsize)
     # The original dataset
     plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
     plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size)
 
     # The areas
-    plt.plot(X[0,0],X[0,1], c='k',label='all safe area')
-    plt.plot(X[0,0],X[0,1], c='brown',label='half safe area')
+    plt.plot(X[0,0],X[0,1], c=all_safe_color, label='all safe area')
+    plt.plot(X[0,0],X[0,1], c=half_safe_color, label='half safe area')
     
     for area in min_all_safe_area:
         radius = area.radius
         rep_point = area.rep_point
-        plt.scatter(rep_point[0],rep_point[1],marker=rep_mark,c=rep_color,label=rep_label,s=rep_size) 
+        plt.scatter(rep_point[0],rep_point[1],marker=rep_mark,c=rep_color,s=rep_size) 
         
         #draw the circle
         x = np.linspace(rep_point[0] - radius, rep_point[0] + radius, 5000)
         y1 = np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
         y2 = -np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
-        plt.plot(x, y1, c='k')
-        plt.plot(x, y2, c='k')
+        plt.plot(x, y1, c=all_safe_color)
+        plt.plot(x, y2, c=all_safe_color)
 
         
     for area in min_half_safe_area:
         radius = area.radius
         rep_point = area.rep_point
-        plt.scatter(rep_point[0],rep_point[1],marker=rep_mark,c=rep_color,label=rep_label,s=rep_size) 
+        plt.scatter(rep_point[0],rep_point[1],marker=rep_mark,c=rep_color,s=rep_size) 
         
         #draw the circle
         x = np.linspace(rep_point[0] - radius, rep_point[0] + radius, 5000)
         y1 = np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
         y2 = -np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
-        plt.plot(x, y1, c='brown')
-        plt.plot(x, y2, c='brown')
+        plt.plot(x, y1, c=half_safe_color)
+        plt.plot(x, y2, c=half_safe_color)
+
+    plt.scatter(rep_point[0],rep_point[1],marker=rep_mark,c=rep_color,s=rep_size,label=rep_label) 
 
     plt.legend()
-    plt.show()
+    # plt.show()
 
 
 def draw_cycle(center,r,c='k'):
@@ -193,7 +197,7 @@ def show_oversampling(X,y,X_oversampled,y_oversampled):
 def show_cos(X,y,X_oversampled,y_oversampled,min_all_safe_area,min_half_safe_area,minlabel=None,majlabel=None):
     
     if minlabel == None and majlabel ==None:
-            minlabel,majlabel = cos.get_labels(y)
+            minlabel,majlabel = cos_bf.get_labels(y)
 
     plt.figure(figsize=(10,10))
     # The original dataset

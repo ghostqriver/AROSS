@@ -1,5 +1,5 @@
 import COS_Funcs.baseline as baseline
-import COS_Funcs.cos.cos as cos
+import COS_Funcs.cos.cos_bf as cos_bf
 import COS_Funcs.cos.generate as G
 
 # import baseline as baseline
@@ -74,7 +74,7 @@ def cos_para_show(datasets,N,c,alpha,linkage='ward',all_safe_gen=G.Smote_Generat
                 X,y = baseline.read_data(dataset_path,dataset)
 
                 if pos_label == None:
-                    pos_label = cos.get_labels(y)[0]
+                    pos_label = cos_bf.get_labels(y)[0]
 
                 for random_state in range(k):
                     scores = [] 
@@ -82,16 +82,16 @@ def cos_para_show(datasets,N,c,alpha,linkage='ward',all_safe_gen=G.Smote_Generat
 
                     if 'c' in changing_para.keys():
                         c = para 
-                        X_train,y_train,num_all_safe,num_half_safe = cos.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
+                        X_train,y_train,num_all_safe,num_half_safe = cos_bf.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
                     elif 'N' in changing_para.keys():
                         N = para
-                        X_train,y_train,num_all_safe,num_half_safe = cos.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
+                        X_train,y_train,num_all_safe,num_half_safe = cos_bf.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
                     elif 'alpha' in changing_para.keys():
                         alpha = para
-                        X_train,y_train,num_all_safe,num_half_safe = cos.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
+                        X_train,y_train,num_all_safe,num_half_safe = cos_bf.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
                     elif 'linkage' in changing_para.keys():
                         linkage = para
-                        X_train,y_train,num_all_safe,num_half_safe = cos.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
+                        X_train,y_train,num_all_safe,num_half_safe = cos_bf.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
 
                     y_pred = baseline.do_classification(X_train,y_train,X_test,classification_model)
                     scores.append(baseline.calc_score(metric,y_test,y_pred,pos_label))
@@ -191,14 +191,14 @@ def choose_alpha(dataset,N=None,c='sample',alpha_list=None,linkage='ward',all_sa
         X,y = baseline.read_data(dataset_path,dataset)
 
         if pos_label == None:
-            pos_label = cos.get_labels(y)[0]
+            pos_label = cos_bf.get_labels(y)[0]
 
         for random_state in range(k):
             scores = [] 
             X_train,X_test,y_train,y_test = train_test_split(X,y,stratify=y,random_state=random_state)
 
             
-            X_train,y_train,num_all_safe,num_half_safe = cos.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
+            X_train,y_train,num_all_safe,num_half_safe = cos_bf.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
 
             y_pred = baseline.do_classification(X_train,y_train,X_test,classification_model)
 

@@ -1,6 +1,6 @@
-label_name = 'label'
-min_label = 1
-maj_label = 0
+# label_name = 'label'
+# min_label = 1
+# maj_label = 0
 
 
 from sklearn.datasets import load_svmlight_file
@@ -57,7 +57,7 @@ def dataset_transform(file_path,format='svmlight'):
         min_label_,maj_label_=get_labels(y)
         y = pd.Series(y)
         y.replace(maj_label_,maj_label,inplace=True)
-        y.replace(min_label_,min_label_,inplace=True)
+        y.replace(min_label_,min_label,inplace=True)
         df['label'] = y
     save_path = file_path.split('.')[0] + '.csv'
     df.to_csv(save_path,index=False)

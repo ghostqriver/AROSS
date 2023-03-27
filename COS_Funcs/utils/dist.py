@@ -28,7 +28,7 @@ def euclidean(x,y):
 def manhantan(x,y):
     return np.abs(x - y).sum()
 
-def calc_dist(x,y,L,cov_i=None):
+def calc_dist(x,y,L=2,cov_i=None):
     
     if L == 1:
         return manhantan(x,y)

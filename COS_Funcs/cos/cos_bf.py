@@ -1,8 +1,13 @@
+'''
+@brief COS's brute force implementation
+@details A bit slow but works as a ground truth when developing speeding up versions
+'''
+
+
 from COS_Funcs.cluster import cure
 from COS_Funcs.utils import visualize as V
 from . import generate as G
 # from .. import clusterings as clusterings
-
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,27 +15,8 @@ import pandas as pd
 import math
 import itertools
 
-
-def calc_dist(vecA, vecB):
-    '''
-    Calculate the distance between points
-    
-    '''
-    return np.sqrt(np.power(vecA - vecB, 2).sum())
-
-
-def get_labels(y):
-    '''
-    Return the minority class's label and majority class's label when given all labels y
-    Only works well on binary dataset as yet
-    return minlabel,int(majlabel)
-    '''
-    valuecounts=pd.Series(y).value_counts().index
-    majlabel=valuecounts[0]
-    minlabel=valuecounts[1:]
-    if len(minlabel)==1:
-        minlabel=int(minlabel[0])
-    return minlabel,int(majlabel)
+from COS_Funcs.utils import get_labels
+from COS_Funcs.utils.dist import calc_cov_i,calc_dist
 
 
 class Area():
