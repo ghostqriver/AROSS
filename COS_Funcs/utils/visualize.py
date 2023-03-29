@@ -32,6 +32,16 @@ alpha = 0.8
 all_safe_color = 'k'
 half_safe_color = 'brown'
 
+grid_color = 'gray'
+grid_line = 'dashed'
+grid_line_width = 0.5
+
+plot_line_color = '#3D3D3D'
+
+import colorir
+grad = colorir.PolarGrad(["#2304C0","FE6546","80F365","1B205F"])
+colors = iter(grad.n_colors(7)) #next(colors)
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -53,6 +63,7 @@ def show_2d_scatter(X,y=None):
     plt.figure(figsize=figsize)
     plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
     plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size)
+    plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
     plt.legend()
     # plt.show()
 
@@ -73,6 +84,8 @@ def show_clusters(clusters):
         plt.scatter(points[:,0],points[:,1],marker=point_mark,c=point_color,s=point_size)
         plt.scatter(rep_points[:,0],rep_points[:,1],marker=rep_mark,c=rep_color,s=rep_size)
     plt.title('clusters')
+    plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
+
     # plt.show()
 
 def show_rep_points(X,y,clusters):
@@ -90,7 +103,8 @@ def show_rep_points(X,y,clusters):
         if len(cluster.rep_points) > 0:
             rep_points = np.array(cluster.rep_points)
             plt.scatter(rep_points[:,0],rep_points[:,1],marker=rep_mark,c=rep_color,s=rep_size,alpha=alpha)
-    plt.scatter(rep_points[0,0],rep_points[0,1],marker=rep_mark,c=rep_color,label=rep_label,s=rep_size)      
+    plt.scatter(rep_points[0,0],rep_points[0,1],marker=rep_mark,c=rep_color,label=rep_label,s=rep_size)   
+    plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)   
     plt.legend()
 
     # plt.show()
@@ -152,7 +166,7 @@ def show_areas(X,y,min_all_safe_area,min_half_safe_area,):
         plt.plot(x, y2, c=half_safe_color)
 
     plt.scatter(rep_point[0],rep_point[1],marker=rep_mark,c=rep_color,s=rep_size,label=rep_label) 
-
+    plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
     plt.legend()
     # plt.show()
 
@@ -179,6 +193,7 @@ def show_single_area(area,new_points=[],circle_c='k',minlabel=None,majlabel=None
     if len(new_points) > 0:
         plt.scatter(new_points[:,0],new_points[:,1],marker = '$\heartsuit$',c = 'red',label = 'synthetic samples',alpha = 0.5)
     draw_cycle(area.rep_point,area.radius,c=circle_c)
+    plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
 
 
 def show_oversampling(X,y,X_oversampled,y_oversampled):
@@ -235,7 +250,7 @@ def show_cos(X,y,X_oversampled,y_oversampled,min_all_safe_area,min_half_safe_are
 
     origin_index = len(X)
     plt.scatter(X_oversampled[origin_index:,0],X_oversampled[origin_index:,1],marker = '$\heartsuit$',c = 'red',label = 'synthetic samples',alpha = 0.5)
-
+    plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
     plt.legend()
     plt.show()
 

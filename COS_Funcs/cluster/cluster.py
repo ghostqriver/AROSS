@@ -1,6 +1,6 @@
 import numpy as np
 from COS_Funcs.utils.dist import calc_dist
-from COS_Funcs.cos import choose_para as choose
+from COS_Funcs.cos import optmize as choose
 
 class Cluster:
     def __init__(self,c):
@@ -11,6 +11,7 @@ class Cluster:
         self.center = 0
         self.rep_points = []
         self.c = c 
+        self.num_min = 0
 
     def renew_point(self,index,point,label):
         '''
@@ -28,8 +29,10 @@ class Cluster:
         self.num = len(self.points)   
         self.points = np.array(self.points)
         self.labels = np.array(self.labels)
+        self.num_min = len(self.labels[self.labels == minlabel])
         if self.c == 0:
             self.c = choose.choose_c(self)
+        
 
     def add_shrink(self,tmp_repset,alpha):
         if len(tmp_repset) != 0:
@@ -39,7 +42,9 @@ class Cluster:
         '''
         renew the para and representative points of the cluster
         '''
-        if self.num <= self.c: # if total number of points less than c, the representative points will be points itselves
+        if self.c == 1:
+            tmpSet = self.center
+        elif self.num <= self.c: # if total number of points less than c, the representative points will be points itselves
             tmpSet = self.points
         else:
             tmpSet = []

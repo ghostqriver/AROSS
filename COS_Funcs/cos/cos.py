@@ -16,9 +16,10 @@ from COS_Funcs.utils.dist import calc_cov_i,calc_dist
 from COS_Funcs.cos.nearest_neighbor import nn_kd,create_kd
 
 def COS(X,y,N,c,alpha,linkage='cure_single',L=2,shrink_half=False,expand_half=True,all_safe_weight=2,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,visualize=False):
-    clusters,all_reps,num_reps = clustering(X,y,N,c,alpha,linkage,L)
-    areas,min_all_safe_area,min_half_safe_area = safe_areas(X,all_reps,y,shrink_half=shrink_half,expand_half=expand_half) 
     
+    minlabel,majlabel = get_labels(y)
+    clusters,all_reps,num_reps = clustering(X,y,N,c,alpha,linkage,L)
+    areas,min_all_safe_area,min_half_safe_area = safe_areas(X,all_reps,y,shrink_half=shrink_half,expand_half=expand_half,minlabel=minlabel,majlabel=majlabel) 
     if visualize == True:
         print('Clusters:')
         V.show_clusters(clusters)
@@ -36,7 +37,7 @@ def COS(X,y,N,c,alpha,linkage='cure_single',L=2,shrink_half=False,expand_half=Tr
 
     return X_generated,y_generated,len(min_all_safe_area),len(min_half_safe_area)
     
-def safe_areas(X,all_reps,y,shrink_half=False,expand_half=True,k=3):
+def safe_areas(X,all_reps,y,shrink_half=False,expand_half=True,k=3,minlabel=None,majlabel=None):
     '''
     Generate all the representative points's area:
     if k neighbors of rep_point are all belonging to the minority class --> min safe area
@@ -52,7 +53,6 @@ def safe_areas(X,all_reps,y,shrink_half=False,expand_half=True,k=3):
     areas = []
     min_all_safe_area = []
     min_half_safe_area = []
-    minlabel,majlabel = get_labels(y)
     tree = create_kd(X)
     for rep in all_reps:
         area = Area(rep)
@@ -93,7 +93,7 @@ class Area():
         @brief Append the neighbor info to arrays
         @note Will be called when expand the all safe area
         '''
-        self.nearest_neighbor = np.append(self.nearest_neighbor,data)
+        self.nearest_neighbor = np.append(self.nearest_neighbor,[data],axis=0)
         self.nearest_neighbor_index = np.append(self.nearest_neighbor_index,index)
         self.nearest_neighbor_label = np.append(self.nearest_neighbor_label,label)
         self.nearest_neighbor_dist = np.append(self.nearest_neighbor_dist,dist)
@@ -188,12 +188,15 @@ class Area():
                     dist = dists[k]
                     label = y[index]
 
+        # IF not safe check K=5 whether it is the half safe
+        # IF for 3 for 5 are not safe at all -> don't generate
+        # K = 3
+        # K += 2
+        # keep safe as safe
+        # expand half safe as it is half safe
+        # expand not safe if can be the safe
         self.renew_paras(safe)
         # self.neighbor_toarray()
-
-
-
-
 
 def calc_num(min_all_safe_area,min_half_safe_area,minlabel):
     '''
@@ -204,8 +207,8 @@ def calc_num(min_all_safe_area,min_half_safe_area,minlabel):
     for area in min_all_safe_area:
         num_n_min_all_safe += area.num_neighbor
     for area in min_half_safe_area:
-        neighbor = np.array(area.nearest_neighbor)
-        label = np.array(area.nearest_neighbor_label)
+        neighbor = area.nearest_neighbor
+        label = area.nearest_neighbor_label
         num_neighbor = len(neighbor[label==minlabel])
         num_n_min_half_safe += num_neighbor 
     return num_n_min_all_safe,num_n_min_half_safe
@@ -344,59 +347,3 @@ def oversampling(X,y,min_all_safe_area,min_half_safe_area,all_safe_gen=G.Smote_G
         
     return X_generated,y_generated
 
-
-def COS(X,y,N,c,alpha,linkage='cure_single',L=2,shrink_half=False,expand_half=False,all_safe_weight=2,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,minlabel=None,majlabel=None,visualize=False):
-    
-    
-    
-    '''
-    CURE(clustering and getting the representative points) -->
-    safe area(Generate the safe areas around all the representative points) -->
-    oversampling(Generate new points in safe areas)
-
-    X: data
-    y: label
-    N: num_expected_clusters,how many clusters you want
-    c: number of representative points in each cluster
-    alpha: the given shrink parameter, the bigger alpha is the closer the representative points to the centroid of the cluster
-     linkage: the linkage way in CURE
-        if 'single' - calculate a nearest distance using representative points as the distance of two clusters, default value;
-        if 'complete' - calculate a furthest distance using representative points as the distance of two clusters;  
-        if 'average' - calculate a average distance using representative points as the distance of two clusters;
-        if 'centroid' - calculate a distance using centorids as the distance of two clusters; 
-        if 'ward' - calculate the variance if merging two clusters as the distance of two clusters;  
-    L: the distance metric, L=1 the Manhattan distance, L=2 the Euclidean distance, by default L=2
-    L: the distance metric will be used in CURE, L=1 the Manhattan distance, L=2 the Euclidean distance, by default L=2
-    shrink_half: if true it will try to shrink the half safe area to exclude the furthest majority class's point out of its neighbor until there is no change, default false 
-    expand_half: if true it will try to expand the half safe area to contain more the nearest minority class's point into its neighbor until there is no chang, default false 
-    all_safe_weight: the safe area's weight, the half safe area's weight is always 1, we just set the all safe area's weight is enough to control the ratio, by default 2
-    all_safe_gen: the generator will be used in the all safe area, by defalut SMOTE, you can set it to any generator function from generate.py
-    all_half_gen: the generator will be used in the half safe area, by defalut SMOTE, you can set it to any generator function from generate.py
-    Gaussian_scale: the scale/standard deviation of Gaussian_Generator
-    IR: the expected imbalance ratio after the oversampling, by default 1
-    minlabel,majlabel: given the label of minority class and majority class, if None will be set from the dataset automatically (only work in binary classification case)
-    visualize: show the COS process, by default False
-    '''
-    if linkage in ['ward','single','complete','average','pyc_cure']:
-        clusters,all_reps,num_reps = clusterings.clustering(X,y,N,c,alpha,linkage=linkage,L=L,minlabel=minlabel,majlabel=majlabel)
-    else:
-        # And define linkage == 'cure_ward'/'cure_single'....
-        clusters,all_reps,num_reps = cure.Cure(X,N,c,alpha,linkage=linkage,L=L)
-    areas,min_all_safe_area,min_half_safe_area = safe_areas(X,all_reps,y,minlabel=minlabel,majlabel=majlabel,shrink_half=shrink_half,expand_half=expand_half) 
-    
-    if visualize == True:
-        print('Clusters:')
-        V.show_clusters(clusters)
-        print('Safe areas:')
-        V.show_areas(X,y,min_all_safe_area,min_half_safe_area)
-
-    X_generated,y_generated = oversampling(X,y,min_all_safe_area,min_half_safe_area,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen,Gaussian_scale=Gaussian_scale,minlabel=minlabel,majlabel=majlabel,all_safe_weight=all_safe_weight,IR=IR,show=visualize)
-
-    if visualize == True:
-        print('Generated dataset:') 
-        V.show_oversampling(X,y,X_generated,y_generated)
-        plt.show()
-        print('All:')
-        V.show_cos(X,y,X_generated,y_generated,min_all_safe_area,min_half_safe_area,minlabel,majlabel)
-
-    return X_generated,y_generated,len(min_all_safe_area),len(min_half_safe_area)

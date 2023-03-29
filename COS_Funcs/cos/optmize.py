@@ -1,13 +1,8 @@
 import COS_Funcs.baseline as baseline
-import COS_Funcs.cos.cos_bf as cos_bf
+import COS_Funcs.cos.cos as cos
 import COS_Funcs.cos.generate as G
 
-# import baseline as baseline
-# import cos as cos
-# import generate as G
-
 import math
-import scipy
 from scipy import stats
 import numpy as np
 from tqdm import tqdm
@@ -15,37 +10,31 @@ from kneed import KneeLocator
 import matplotlib.pyplot as plt
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.model_selection import train_test_split
-import warnings
-warnings.filterwarnings("ignore") 
+
+def choose_c(cluster):
+    
+    N = cluster.num
+    num_min = cluster.num_min
+    c = sample_size(N,num_min)
+    
+    return c
+
+def sample_size(N,num_min):
+    p = num_min/N
+    # size1 might be 0 when num_min == 0 or num_min == N, then set c = 1, choose centroid as rep_point directly
+    if p==0 or p==1:
+        size1 = 1
+    else:
+        Z = 1.64
+        epsilon = 0.05
+        e = epsilon + np.log(N)/N
+        x = (Z**2 * p * (1-p)) / (e**2)
+        size1 = (N * x) / (x + N - 1)
+    return size1
 
 
-# def silhouette(model,X,max_cluster=None):
-#     s_scores = {} 
-    
-#     max_s_score = -1
-#     best_cluster = 2
-    
-#     if max_cluster == None:
-#         max_cluster = math.ceil(len(X)/2)
-# #         max_cluster = math.ceil(np.sqrt(len(X)/2))
 
-#     for n in range(2,max_cluster): 
-#         agg = model(n_clusters=n).fit(X)
-#         labels = agg.labels_
-#         s_score = silhouette_score(X, labels)
-#         s_scores[n] = (s_score) 
-#         if s_score>max_s_score:
-#             max_s_score = s_score
-#             best_cluster = n
-    
-#     plt.figure(figsize=(12,8))
-#     plt.plot(list(s_scores.keys()),list(s_scores.values()))
-#     plt.title('Silhouette Score')
-#     plt.xlabel('Number of Clusters')
-#     plt.ylabel('Silhouette Value')
-#     plt.show()
-    
-#     return best_cluster
+
 
 
 
@@ -222,7 +211,7 @@ def choose_alpha(dataset,N=None,c='sample',alpha_list=None,linkage='ward',all_sa
     return N,best_alpha
 
 
-def sample_size(cluster):
+def sample_size_(cluster):
     # print('All instances:',cluster.num,end=', ')
     Z_score = 2.58
     margin_error = 0.05
@@ -233,11 +222,7 @@ def sample_size(cluster):
     return math.ceil(size)
 
 
-def choose_c(cluster):
-    
-    c = sample_size(cluster)
-    
-    return c
+
 
 
 def bic_score(X: np.ndarray, labels: np.array):
