@@ -1,5 +1,5 @@
 import COS_Funcs.baseline as baseline
-import COS_Funcs.cos.cos as cos
+# from COS_Funcs.cos import cos
 import COS_Funcs.cos.generate as G
 
 import math
@@ -30,7 +30,7 @@ def sample_size(N,num_min):
         e = epsilon + np.log(N)/N
         x = (Z**2 * p * (1-p)) / (e**2)
         size1 = (N * x) / (x + N - 1)
-    return size1
+    return math.ceil(size1)
 
 
 

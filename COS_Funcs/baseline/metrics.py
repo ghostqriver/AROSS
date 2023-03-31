@@ -1,4 +1,3 @@
-import COS_Funcs.cos.cos_bf as cos_bf
 from COS_Funcs.utils import *
 
 from sklearn import metrics

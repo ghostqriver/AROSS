@@ -15,7 +15,6 @@
     clusters,all_reps,num_reps = cure.Cure(X,num_expected_clusters,c,alpha,linkage,L,visualize = False)
 '''
 
-from sklearn.cluster import AgglomerativeClustering
 from pyclustering.cluster.cure import cure as pyc_cure
 from COS_Funcs.utils import get_labels
 from COS_Funcs.utils.dist import calc_cov_i

@@ -6,13 +6,11 @@
 from . import generate as G
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 import math
 import itertools
 from COS_Funcs.cluster import clustering
 from COS_Funcs.utils import visualize as V
 from COS_Funcs.utils import get_labels
-from COS_Funcs.utils.dist import calc_cov_i,calc_dist
 from COS_Funcs.cos.nearest_neighbor import nn_kd,create_kd
 
 def COS(X,y,N,c,alpha,linkage='cure_single',L=2,shrink_half=False,expand_half=True,all_safe_weight=2,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,visualize=False):
@@ -86,14 +84,14 @@ class Area():
         
         self.num_neighbor = 0
         self.radius = 0
-        self.safe = 0 # 1 min_all_safe 2 min_half_safe 
+        self.safe = 0 # 0 no_safe 1 min_all_safe 2 min_half_safe 
 
     def append_neighbor(self,data,index,label,dist):
         '''
         @brief Append the neighbor info to arrays
         @note Will be called when expand the all safe area
         '''
-        self.nearest_neighbor = np.append(self.nearest_neighbor,[data],axis=0)
+        self.nearest_neighbor = np.append(self.nearest_neighbor,data,axis=0)
         self.nearest_neighbor_index = np.append(self.nearest_neighbor_index,index)
         self.nearest_neighbor_label = np.append(self.nearest_neighbor_label,label)
         self.nearest_neighbor_dist = np.append(self.nearest_neighbor_dist,dist)
@@ -117,18 +115,14 @@ class Area():
         # the distance from rep_point to farthest neighbor in the area
         self.radius = self.nearest_neighbor_dist[-1]
 
-    def gen_safe_area(self,X,y,tree,minlabel=None,majlabel=None,shrink_half=False,expand_half=True,k=3):
+    def gen_safe_area(self,X,y,tree,minlabel=None,majlabel=None,shrink_half=True,expand_half=True,k=3):
         '''
         @brief Generate safe/half safe area
         @detail If k neighbors of rep_point are all belonging to the minority class --> min safe area
                 If more than k/2 neighbors of rep_point are belonging to the minority class --> min half safe area
-        X: data
-        y: label
-        minlabel,majlabel: given the label of minority class and majority class, if None will be set from the dataset automatically (only work in binary classification case)
         k: should be an odd value, it will check k nearest neighbor of the representative points to decide safe or half safe, default 3
         shrink_half: if true it will try to shrink the half safe area to exclude the furthest majority class's point out of its neighbor until there is no change, default false, after shrink if satisfied all safe condition, then it will set that half safe area to all safe area 
         expand_half: if true it will try to expand the half safe area to contain more the nearest minority class's point into its neighbor until there is no chang, default false 
-        If the shrink_half and expand_half are both True, it will only do the shrinking
         '''
         safe = 0
 
@@ -146,25 +140,26 @@ class Area():
         labels = self.nearest_neighbor_label
         if len(labels[labels==minlabel]) == k: 
             safe = 1
-      
+            add = 1
             # Expand ALL SAFE AREA
-            inds,dists = nn_kd([self.rep_point],k+1,tree)
-            index = inds[k]
-            dist = dists[k]
-            label = y[index]
+            index,label,dist = self.expand(tree,y,k,add)
             while label == minlabel:
                 self.append_neighbor(X[index],index,label,dist)
-                k += 1
-                inds,dists = nn_kd([self.rep_point],k+1,tree)
-                index = inds[k]
-                dist = dists[k]
-                label = y[index]
+                k += add
+                index,label,dist = self.expand(tree,y,k,add)
 
         # HALF SAFE
         elif len(labels[labels==minlabel]) > k/2: 
             safe = 2
-
-            # First expand, if can not expand then shrink
+            add = 2
+            # If true. EXPAND HALF SAFE AREA
+            if expand_half == True:
+                index,label,dist = self.expand(tree,y,k,add)
+                while any(label == minlabel):
+                    self.append_neighbor(X[index],index,label,dist)
+                    k += add
+                    index,label,dist = self.expand(tree,y,k,add)
+      
             # If true. SHRINK HALF SAFE AREA
             if shrink_half == True:
                 while self.nearest_neighbor_label[-1] != minlabel: 
@@ -173,31 +168,44 @@ class Area():
                 # Check whether all safe
                 if len(labels[labels==minlabel]) == len(labels): 
                     safe = 1
-
-            # If true. EXPAND HALF SAFE AREA        
-            elif expand_half == True:
-                inds,dists = nn_kd([self.rep_point],k+1,tree)
-                index = inds[k]
-                dist = dists[k]
-                label = y[index]
-                while label == minlabel:
+        
+        # Not SAFE            
+        else:
+            add = 2
+            cnt = 0
+            while cnt < 5:
+                index,label,dist = self.expand(tree,y,k,add)
+                self.append_neighbor(X[index],index,label,dist)
+                k += add
+                labels = self.nearest_neighbor_label
+                if len(labels[labels==minlabel]) > k/2: 
+                    # Become a half safe area
+                    safe = 2
+                    break
+                cnt += 1
+            # If true. EXPAND HALF SAFE AREA
+            if safe != 0 and expand_half == True:
+                index,label,dist = self.expand(tree,y,k,add)
+                while any(label == minlabel):
                     self.append_neighbor(X[index],index,label,dist)
-                    k += 1
-                    inds,dists = nn_kd([self.rep_point],k+1,tree)
-                    index = inds[k]
-                    dist = dists[k]
-                    label = y[index]
+                    k += add
+                    index,label,dist = self.expand(tree,y,k,add)
+                    
+            if safe != 0 and shrink_half == True:
+                while self.nearest_neighbor_label[-1] != minlabel: 
+                    self.del_neighbor()
+                # Impossible to be all safe
 
-        # IF not safe check K=5 whether it is the half safe
-        # IF for 3 for 5 are not safe at all -> don't generate
-        # K = 3
-        # K += 2
-        # keep safe as safe
-        # expand half safe as it is half safe
-        # expand not safe if can be the safe
         self.renew_paras(safe)
-        # self.neighbor_toarray()
 
+    def expand(self,tree,y,k,add):
+        inds,dists = nn_kd([self.rep_point],k+add,tree)
+        index = inds[k:k+add]
+        dist = dists[k:k+add]
+        label = y[index]
+        return index,label,dist
+        
+        
 def calc_num(min_all_safe_area,min_half_safe_area,minlabel):
     '''
     Calculate how many minority class' neighbors in total of all the all_safe_area and all the half_safe_area
