@@ -74,7 +74,7 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
                         X_train,y_train = do_oversampling(oversampler,X_train,y_train,X_test=X_test,y_test=y_test,classifier=classifiers[0]) 
                         
                     else:
-                        X_train,y_train = do_oversampling(oversampler,X_train,y_train,args) 
+                        X_train,y_train = do_oversampling(oversampler,X_train,y_train) 
                         
                     end = time.time()
                     

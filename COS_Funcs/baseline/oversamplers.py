@@ -1,6 +1,7 @@
 from imblearn.over_sampling import SMOTE,SVMSMOTE,ADASYN
 from imblearn.combine import SMOTETomek,SMOTEENN
 from smote_variants import (DBSMOTE,DSMOTE,SMOTE_D,CURE_SMOTE,kmeans_SMOTE,SOMO,NRAS,SYMPROD,G_SMOTE,RWO_sampling,ANS)
+# Comment this after completing GAN baseline
 from COS_Funcs.baseline.GANs.oversampler import WGAN,WGAN_filter
 
 def do_oversampling(model,X_train,y_train,**args): 
@@ -22,7 +23,7 @@ def do_oversampling(model,X_train,y_train,**args):
     
     elif model == 'smote_tl':
         smotetl = SMOTETomek()
-        return smotetl.fit_resample(X_train,y_train,)
+        return smotetl.fit_resample(X_train,y_train)
     
     elif model == 'adasyn':
         adasyn = ADASYN()
