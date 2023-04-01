@@ -1,6 +1,4 @@
-from COS_Funcs.cluster import cure_bf
 from COS_Funcs.cluster import cure
-from COS_Funcs.cluster import cure_kdtree
 from COS_Funcs.cluster import cure_pyc
 from COS_Funcs.cluster import agglomerative
 

@@ -1,6 +1,7 @@
 '''
-@source: https://github.com/LyudaK/msc_thesis_imblearn
-@author: Liudmila Kopeikina
+@brief WGAN and filter tools
+@source https://github.com/LyudaK/msc_thesis_imblearn
+@author Liudmila Kopeikina
 '''
 import pandas as pd 
 import numpy as np

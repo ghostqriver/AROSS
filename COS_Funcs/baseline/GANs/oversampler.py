@@ -1,3 +1,8 @@
+'''
+@brief WGAN oversampler for baseline
+@source https://github.com/LyudaK/msc_thesis_imblearn
+@author Liudmila Kopeikina
+'''
 import collections
 import pandas as pd
 import tensorflow as tf 
@@ -5,6 +10,7 @@ import numpy as np
 from .WGAN import *
 from .TABGAN import *
 from .utils import *
+import copy
 from COS_Funcs.utils import get_labels
 from COS_Funcs.baseline.classifiers import do_classification
 
@@ -20,38 +26,33 @@ def WGAN(X_train,y_train,target='label',classes=[0,1]):
     X_sample=X_sample.drop(target,1)
     return X_sample.values,y_sample.values
 
-def WGAN_filter(X_train,y_train,X_test,y_test,model,target='label',classes=[0,1]):
-    
+
+def WGAN_filter(X_train,y_train,X_test,y_test,classifier,target='label',classes=[0,1]):
+    y_train_ = copy.deepcopy(y_train)
+    minclass=[get_labels(y_train_)[0]]
+
     X_train,y_train,X_test,y_test = prepare_data(X_train,y_train,X_test,y_test,target)
-    preds = do_classification(X_train,y_train,X_test,model)
+    preds=do_classification(X_train,y_train,X_test,classifier)
+
     init_error=error_per_class(y_test,preds,classes)
+
     X_out=X_train.copy()
     y_out=y_train.copy()
-    minclass = [get_labels(y_train)[0]]
-    X_train,y_train,X_test,y_test = prepare_data(X_train,y_train,X_test,y_test,target)
+
     for c in classes:
         error=init_error
-        ins=y_train.index[y_train==c].tolist()
+        ins=y_train.index[y_train_==c].tolist()
         print('GEN DATA FOR CLASS ', c)
         X_gan= gen_data(X_train, pd.DataFrame(y_train),target,set([c])) #1
         y_gan = pd.Series(X_gan[target]) #2
         X_gan=X_gan.drop(target,1) #3
-        
-        X_filtered,y_filtered = filter_data(X_train,y_train,X_gan,pd.Series(y_gan),
-                                          X_test,init_error,c,y_test,classes)
-#         X_out=X_out.append(pd.DataFrame(X_filtered))
-#         y_out=pd.concat([pd.DataFrame(y_out,columns=[target]),
-#                        pd.DataFrame(y_filtered,columns=[target])])
-#         y_out.reset_index(inplace=True,drop=True)
-#         X_out.reset_index(inplace=True,drop=True)
-#         X_gan=X_filtered.append(pd.DataFrame(X_train))
-#         y_gan=pd.concat([pd.DataFrame(y_filtered,columns=[target]),
-#                        pd.DataFrame(y_train)])
-#         clf_model=get_model(X_gan,y_gan.astype('int'))
-#         preds = clf_model.predict(X_test)
-#         error=error_per_class(y_test,preds,classes)
-#         y_gan.reset_index(inplace=True,drop=True)
-#         X_gan.reset_index(inplace=True,drop=True)
+
+        X_filtered,y_filtered = filter_data(X_train,y_train_,X_gan,pd.Series(y_gan),
+                                      X_test,init_error,c,y_test,classes)
+
+        X_train = X_train.append(X_filtered)
+        y_train_ = np.append(y_train_,y_filtered.values)
+    return X_train.values,y_train_
 
 
 def generate_synthetic_samples(generator,class_id,headers_name,nb_instance,NOISE_DIM):

@@ -1,3 +1,8 @@
+'''
+@brief WGAN network building
+@source https://github.com/LyudaK/msc_thesis_imblearn
+@author Liudmila Kopeikina
+'''
 import tensorflow as tf 
 from tensorflow.keras.layers import Dense
 
