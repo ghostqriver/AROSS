@@ -2,8 +2,7 @@ dataset_path = 'Datasets/'
 
 oversamplers = ['original','smote','db_smote','smote_d','cure_smote','kmeans_smote','adasyn','somo','symprod',
                 'smote_enn','smote_tl','nras','g_smote','rwo_sampling','ans','svm_smote',
-                # 'd_smote' also slow 
-                # 'wgan', 'wgan_filter' need to be modify a bit, 'tabgan' error
+                'wgan', 'wgan_filter' 
                 # 'cos'
                 ] 
 
@@ -71,10 +70,16 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
                     if oversampler == 'cos':
                         X_train,y_train,num_all_safe,num_half_safe = do_oversampling(oversampler,X_train,y_train,args) 
 
+                    elif oversampler == 'wgan' or oversampler == 'wgan_filter':
+                        X_train,y_train = do_oversampling(oversampler,X_train,y_train,X_test=X_test,y_test=y_test,classifier=classifiers[0]) 
+                        
                     else:
                         X_train,y_train = do_oversampling(oversampler,X_train,y_train,args) 
+                        
                     end = time.time()
+                    
                     print('cost:',end-start)
+                    
                     for classifier in classifiers:     
                         y_pred = do_classification(X_train,y_train,X_test,classifier)
                         for metric in metrics:
@@ -82,7 +87,7 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
                             score = calc_score(metric,y_test,y_pred,pos_label)
                             print(score)
                             writers[classifier][metric]['scores_df'][random_state][oversampler].loc[dataset] = score
-                            
+                        
                     
                 except BaseException as e: 
                     print(oversampler,'cause an error on',dataset)
