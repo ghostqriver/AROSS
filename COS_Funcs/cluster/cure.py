@@ -284,13 +284,18 @@ def Cure(X,num_expected_clusters,c,alpha,linkage='cure_single',L=2,visualize = F
     if visualize == True:
         visualize_cure(clusters,dist)
     
-    # Flatten all representative points 
+    # Flatten all representative points and get label of clusters
+    
     lst = [] 
-    for i in clusters:
+    labels = [0 for i in range(len(X))]
+
+    for ind,i in enumerate(clusters):
         for j in i.rep_points:
-            lst.append(j)  
+            lst.append(j) 
+        labels[i.index] = ind
+
     all_reps = np.array(lst) 
     num_reps = (all_reps.shape[0])
          
 
-    return clusters,all_reps,num_reps
+    return clusters,all_reps,num_reps,np.array(labels)

@@ -36,7 +36,7 @@ def split_data(X,y,random_state=None):
     '''
     @  Return: X_train,X_test,y_train,y_test
     '''
-    return train_test_split(X,y,stratify=y,random_state=random_state)
+    return train_test_split(X,y,stratify=y,random_state=random_state,test_size=0.33)
 
 def make_dir(dir):
     if not os.path.exists(dir.split('/')[0]):

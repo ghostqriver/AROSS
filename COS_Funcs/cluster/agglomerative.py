@@ -36,11 +36,16 @@ def Agglomerativeclustering(X,y,N,c,alpha,linkage,L=2):
     
     agg = AgglomerativeClustering_(n_clusters=N, linkage=linkage).fit(X)
     labels = agg.labels_
+    
+    if alpha is None and c is None:
+        # For saving running cost in parameter optimization
+        return None,None,None,labels
+    
     # into cluster objects
     clusters = Cluster.renew_clusters(X,y,labels,clusters,alpha,L,cov_i,minlabel,majlabel)
     # Flatten all representative points 
     all_reps,num_reps = Cluster.flatten_rep(clusters)
     
-    return clusters,all_reps,num_reps
+    return clusters,all_reps,num_reps,labels
 
 

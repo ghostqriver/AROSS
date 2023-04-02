@@ -1,17 +1,17 @@
 figsize = (7,6)
 
-rep_color = 'k'
+rep_color = '#592626'
 rep_mark = 'x'
 rep_label = 'representative points'
 rep_size = 35
 
-min_mark = '.'
-min_size = 50
+min_mark = 'o'
+min_size = 15
 min_color ='blue'
 min_label = 'minority class'
    
-maj_mark = '.'
-maj_size = 40
+maj_mark = 's'
+maj_size = 9
 maj_color = 'gray'
 maj_label = 'majority class'
 
@@ -37,7 +37,10 @@ grid_line = 'dashed'
 grid_line_width = 0.5
 
 plot_line_color = '#3D3D3D'
-
+plot_line_width = 0.9
+vline_color = '#FFAA15'
+vline_width = 0.9
+vline_style = 'dashed'
 import colorir
 grad = colorir.PolarGrad(["#2304C0","FE6546","80F365","1B205F"])
 colors = iter(grad.n_colors(7)) #next(colors)
@@ -46,8 +49,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import itertools
-import colorir
-from COS_Funcs.cos import cos_bf
+from COS_Funcs.utils import get_labels
 from COS_Funcs.cos import generate as G
 
 
@@ -59,7 +61,7 @@ def show_2d_scatter(X,y=None):
         plt.scatter(X[:,0],X[:,1],marker=maj_mark,c=maj_color)
         plt.show()
         return 
-    minlabel,majlabel = cos_bf.get_labels(y)
+    minlabel,majlabel = get_labels(y)
     plt.figure(figsize=figsize)
     plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
     plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size)
@@ -83,10 +85,31 @@ def show_clusters(clusters):
         rep_points = np.array(cluster.rep_points)
         plt.scatter(points[:,0],points[:,1],marker=point_mark,c=point_color,s=point_size)
         plt.scatter(rep_points[:,0],rep_points[:,1],marker=rep_mark,c=rep_color,s=rep_size)
+    plt.scatter(rep_points[:,0],rep_points[:,1],marker=rep_mark,c=rep_color,s=rep_size,label=rep_label)
     plt.title('clusters')
     plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
-
+    plt.legend()
     # plt.show()
+
+def show_clusters_(X,labels,y,all_reps):
+    plt.figure(figsize=figsize)
+    minlabel,majlabel = get_labels(y)
+    clus_len = max(labels)
+    point_colors_ = itertools.cycle(point_colors)
+    for clus_id in range(clus_len+1):
+        point_color = next(point_colors_)
+        clus = X[labels==clus_id]
+        ys = y[labels==clus_id]
+        plt.scatter(clus[ys==minlabel,0],clus[ys==minlabel,1],marker=min_mark,s=min_size,c=point_color)
+        plt.scatter(clus[ys==majlabel,0],clus[ys==majlabel,1],alpha=alpha,marker=maj_mark,s=maj_size,c=point_color)
+    
+    plt.scatter(clus[ys==minlabel,0],clus[ys==minlabel,1],marker=min_mark,s=min_size,c=point_color,label=min_label)
+    plt.scatter(clus[ys==majlabel,0],clus[ys==majlabel,1],alpha=alpha,marker=maj_mark,s=maj_size,c=point_color,label=maj_label)
+    plt.scatter(all_reps[:,0],all_reps[:,1],marker=rep_mark,c=rep_color,s=rep_size,alpha=alpha,label=rep_label)
+    plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
+
+    plt.legend()
+#     plt.show()
 
 def show_rep_points(X,y,clusters):
     '''
@@ -94,7 +117,7 @@ def show_rep_points(X,y,clusters):
     @para 
         clusters: the list contain cluster objects
     '''
-    minlabel,majlabel = cos_bf.get_labels(y)
+    minlabel,majlabel = get_labels(y)
     plt.figure(figsize=figsize)
     plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
     plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size)
@@ -129,7 +152,7 @@ def show_areas(X,y,min_all_safe_area,min_half_safe_area,):
         min_half_safe_area: the all safe Area list returned by cos.safe_areas() functions
     '''
 
-    minlabel,majlabel = cos_bf.get_labels(y)
+    minlabel,majlabel = get_labels(y)
 
     plt.figure(figsize=figsize)
     # The original dataset
@@ -212,9 +235,9 @@ def show_oversampling(X,y,X_oversampled,y_oversampled):
 def show_cos(X,y,X_oversampled,y_oversampled,min_all_safe_area,min_half_safe_area,minlabel=None,majlabel=None):
     
     if minlabel == None and majlabel ==None:
-            minlabel,majlabel = cos_bf.get_labels(y)
+            minlabel,majlabel = get_labels(y)
 
-    plt.figure(figsize=(10,10))
+    plt.figure(figsize=figsize)
     # The original dataset
     plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker='*',c='blue',label='minority class')
     plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker='.',c='k',label='majority class')

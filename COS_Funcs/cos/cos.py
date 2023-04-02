@@ -12,11 +12,11 @@ from COS_Funcs.cluster import clustering
 from COS_Funcs.utils import visualize as V
 from COS_Funcs.utils import get_labels
 from COS_Funcs.cos.nearest_neighbor import nn_kd,create_kd
-
-def COS(X,y,N,c,alpha,linkage='cure_single',L=2,shrink_half=False,expand_half=True,all_safe_weight=2,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,visualize=False):
+from imblearn.under_sampling import TomekLinks
+def COS(X,y,N,c,alpha,linkage='cure_single',L=2,shrink_half=True,expand_half=True,all_safe_weight=2,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,visualize=False):
     
     minlabel,majlabel = get_labels(y)
-    clusters,all_reps,num_reps = clustering(X,y,N,c,alpha,linkage,L)
+    clusters,all_reps,_,_ = clustering(X,y,N,c,alpha,linkage,L)
     areas,min_all_safe_area,min_half_safe_area = safe_areas(X,all_reps,y,shrink_half=shrink_half,expand_half=expand_half,minlabel=minlabel,majlabel=majlabel) 
     if visualize == True:
         print('Clusters:')
@@ -25,7 +25,7 @@ def COS(X,y,N,c,alpha,linkage='cure_single',L=2,shrink_half=False,expand_half=Tr
         V.show_areas(X,y,min_all_safe_area,min_half_safe_area)
 
     X_generated,y_generated = oversampling(X,y,min_all_safe_area,min_half_safe_area,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen,Gaussian_scale=Gaussian_scale,minlabel=minlabel,majlabel=majlabel,all_safe_weight=all_safe_weight,IR=IR,show=visualize)
-
+    over_size = len(X_generated)
     if visualize == True:
         print('Generated dataset:') 
         V.show_oversampling(X,y,X_generated,y_generated)
@@ -33,6 +33,11 @@ def COS(X,y,N,c,alpha,linkage='cure_single',L=2,shrink_half=False,expand_half=Tr
         print('All:')
         V.show_cos(X,y,X_generated,y_generated,min_all_safe_area,min_half_safe_area,minlabel,majlabel)
 
+    # tl = TomekLinks()
+    # X_generated,y_generated  = tl.fit_resample(X_generated,y_generated)
+    # under_size = len(X_generated)
+    # if visualize == True:
+    #     print(over_size - under_size,'samples was undersampled.')
     return X_generated,y_generated,len(min_all_safe_area),len(min_half_safe_area)
     
 def safe_areas(X,all_reps,y,shrink_half=False,expand_half=True,k=3,minlabel=None,majlabel=None):

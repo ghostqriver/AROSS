@@ -10,12 +10,12 @@ def clustering(X,y,N,c,alpha,linkage='cure_single',L=2):
 
         if linkage == 'cure_single' and L==2:
             # Most fast CURE with ccore 
-            clusters,all_reps,num_reps = cure_pyc.Cure(X,y,N,c,alpha,L)
+            clusters,all_reps,num_reps,labels = cure_pyc.Cure(X,y,N,c,alpha,L)
         else:
             # Slow but precise
-            clusters,all_reps,num_reps = cure.Cure(X,num_expected_clusters,c,alpha,linkage,L)
+            clusters,all_reps,num_reps,labels = cure.Cure(X,num_expected_clusters,c,alpha,linkage,L)
 
     elif linkage in ['ward','single','complete','average']:
-        clusters,all_reps,num_reps = agglomerative.Agglomerativeclustering(X,y,N,c,alpha,linkage,L)
+        clusters,all_reps,num_reps,labels = agglomerative.Agglomerativeclustering(X,y,N,c,alpha,linkage,L)
 
-    return clusters,all_reps,num_reps
+    return clusters,all_reps,num_reps,labels

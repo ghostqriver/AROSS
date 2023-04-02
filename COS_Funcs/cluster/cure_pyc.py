@@ -27,19 +27,27 @@ def Cure(X,y,N,c,alpha,L=2,ccore=True):
         # Or change it to minority class
         cov_i = calc_cov_i(X)
         
+    if c == 0:
+        # set a default c for pyclustering's cure
+        c_ = c
+        c = 5
+        
     minlabel,majlabel = get_labels(y)        
-    clusters = Cluster.gen_clusters(N,c)
+    clusters = Cluster.gen_clusters(N,c_)
     cure_instance = pyc_cure(X,N,c,alpha,ccore=ccore)
     cure_instance.process()
     cure_clusters = cure_instance.get_clusters()
     labels = pyc_cure2label(len(X),cure_clusters)
+    if alpha is None and c is None:
+        # For saving running cost in parameter optimization
+        return None,None,None,labels
     # Be careful here, the representative points in clusters are generate by Cluster class
     clusters = Cluster.renew_clusters(X,y,labels,clusters,alpha,L,cov_i,minlabel,majlabel)
     # Use its own representative points
     rep_points = cure_instance.get_representors()
     all_reps,num_reps = pyc_cure_flatten(rep_points)
 
-    return clusters,all_reps,num_reps
+    return clusters,all_reps,num_reps,labels
 
 # Functions for transforming pyclustering.cluster.cure to COS needed format
 def pyc_cure2label(length,clusters):
@@ -52,7 +60,7 @@ def pyc_cure2label(length,clusters):
         for point_index in point_indexs:
             labels[point_index] = cluster_id
             
-    return labels
+    return np.array(labels)
 
 def pyc_cure_flatten(rep_points):
     '''

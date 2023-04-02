@@ -1,6 +1,29 @@
 import numpy as np
+import math
 from COS_Funcs.utils.dist import calc_dist
-from COS_Funcs.cos import optmize
+# from COS_Funcs.cos import optimize
+
+def choose_c(cluster):
+    
+    N = cluster.num
+    num_min = cluster.num_min
+    c = sample_size(N,num_min)
+    
+    return c
+
+def sample_size(N,num_min):
+    p = num_min/N
+    # size1 might be 0 when num_min == 0 or num_min == N, then set c = 1, choose centroid as rep_point directly
+    if p==0 or p==1:
+        size1 = 1
+    else:
+        Z = 1.64
+        epsilon = 0.05
+        e = epsilon + np.log(N)/N
+        x = (Z**2 * p * (1-p)) / (e**2)
+        size1 = (N * x) / (x + N - 1)
+    return math.ceil(size1)
+
 
 class Cluster:
     def __init__(self,c):
@@ -31,7 +54,7 @@ class Cluster:
         self.labels = np.array(self.labels)
         self.num_min = len(self.labels[self.labels == minlabel])
         if self.c == 0:
-            self.c = optmize.choose_c(self)
+            self.c = choose_c(self)
         
 
     def add_shrink(self,tmp_repset,alpha):

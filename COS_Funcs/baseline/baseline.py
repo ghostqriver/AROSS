@@ -54,14 +54,13 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
         
         for dataset in datasets: 
             
+            X,y = read_data(dataset)
 #             print(dataset)
-            scores = [] 
 
             for oversampler in oversamplers:
                 print(oversampler,end='|')
-                X,y = read_data(dataset)
 
-                X_train,X_test,y_train,y_test = split_data(X,y)
+                X_train,X_test,y_train,y_test = split_data(X,y,random_state=random_state)
 
                 pos_label = get_labels(y)[0]
                 
