@@ -58,9 +58,7 @@ def Gaussian_Step(area,radius_new,num,scale):
 
 
 def Gaussian_Generator(area,num,*scale):
-    '''
 
-    '''
     new_points = []
     radius_new = np.sqrt(2) * area.radius /2 
     if len(scale) == 0:

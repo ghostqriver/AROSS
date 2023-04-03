@@ -13,7 +13,8 @@ from COS_Funcs.utils import visualize as V
 from COS_Funcs.utils import get_labels
 from COS_Funcs.cos.nearest_neighbor import nn_kd,create_kd
 from imblearn.under_sampling import TomekLinks
-def COS(X,y,N,c,alpha,linkage='cure_single',L=2,shrink_half=True,expand_half=True,all_safe_weight=2,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,visualize=False):
+
+def COS(X,y,N,c,alpha,linkage='cure_single',L=2,shrink_half=True,expand_half=True,all_safe_weight=1,all_safe_gen=G.Gaussian_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,visualize=False):
     
     minlabel,majlabel = get_labels(y)
     clusters,all_reps,_,_ = clustering(X,y,N,c,alpha,linkage,L)

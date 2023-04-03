@@ -18,13 +18,11 @@ import os
 import glob
 datasets = glob.glob(os.path.join(dataset_path,'*.csv'))
 
-
 from COS_Funcs.utils import *
 from COS_Funcs.baseline.classifiers import do_classification
 from COS_Funcs.baseline.oversamplers import do_oversampling
 from COS_Funcs.baseline.metrics import calc_score
-
-from sklearn.model_selection import train_test_split
+from COS_Funcs.cos import optimize
 import matplotlib.pyplot as plt
 import pandas as pd
 import warnings
@@ -33,7 +31,7 @@ import math
 from tqdm import tqdm
 import copy
 
-def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversamplers,dataset_path=dataset_path,datasets=datasets,show_folds=False,**args):
+def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversamplers,datasets=datasets,show_folds=True,**args):
     #pd.set_option('precision',5)  
     #pd.set_option('display.width', 100)
     #pd.set_option('expand_frame_repr', False)
@@ -82,11 +80,12 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
                     for classifier in classifiers:     
                         y_pred = do_classification(X_train,y_train,X_test,classifier)
                         for metric in metrics:
-                            print(random_state+1,'|',dataset,'|',oversampler,'|',classifier,'|',metric,':',end='')
                             score = calc_score(metric,y_test,y_pred,pos_label)
-                            print(score)
+                            if show_folds:
+                                print(random_state+1,'|',dataset,'|',oversampler,'|',classifier,'|',metric,':',end='')
+                                print(score)
+
                             writers[classifier][metric]['scores_df'][random_state][oversampler].loc[dataset] = score
-                        
                     
                 except BaseException as e: 
                     print(oversampler,'cause an error on',dataset)
@@ -95,9 +94,78 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
     write_writer(writers,classifiers,metrics,k,oversamplers,datasets)
     return writers
 
-def base_name(metric,classifier,k):
-    return classifier+'_'+metric+'_k'+str(k)+'.xlsx'
+def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage='ward',L=2,all_safe_weight=1,IR=1,show_folds=True):
 
+    path = cos_save_path
+    make_dir(path)
+
+    if isinstance(classifiers,str):
+        classifiers = [classifiers]
+    if isinstance(metrics,str):
+        metrics = [metrics]
+
+    K_fold_dict = {}
+
+    file_name = os.path.join(path,cos_file_name(classifiers,metrics))
+    dict_file_name = file_name + '_folds.json'
+    file_name = file_name + '.xlsx'
+    writer = pd.ExcelWriter(file_name)
+
+    index = list(map(lambda x:os.path.basename(x).split('.')[0],datasets))
+    
+    for classifier in classifiers:     
+
+        for metric in metrics:
+
+            df = pd.DataFrame(columns=['cos'],index=datasets)
+            sheet_name_ = sheet_name(metric,classifier,k)
+            
+            for dataset in datasets: 
+
+                # try:
+                scores,score = cos_baseline_(dataset,metric,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
+
+                # except BaseException as e: 
+                print('COS cause an error on',dataset,'with',classifier)
+                scores = []
+                score = None
+                continue 
+
+                key_name_ = key_name(dataset,sheet_name_)
+                K_fold_dict[key_name_] = scores
+                df['cos'].loc[dataset] = score
+
+            df.index = index
+            df.to_excel(writer,sheet_name= sheet_name_)
+
+    writer.save()
+    save_json(K_fold_dict,dict_file_name)
+    print("File saved in",file_name,'and',dict_file_name)
+    
+def cos_baseline_(dataset,metric,classifier,k=10,linkage='ward',L=2,all_safe_weight=1,IR=1,show_folds=True):
+    scores = []
+    X,y = read_data(dataset)
+    for random_state in range(k):
+        X_train,X_test,y_train,y_test = split_data(X,y)
+        pos_label = get_labels(y)[0]
+
+        # Choose N
+        N = optimize.choose_N(X_train, y_train)
+        
+        # Choose alpha
+        best_alpha,best_score = optimize.choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
+        if show_folds:      
+            print(random_state+1,'|',dataset,'|',classifier,'|',metric,':',end=' ')
+            print(best_score)
+        scores.append(best_score)
+    avg = np.mean(scores)
+    if show_folds:      
+        print(dataset,'|',classifier,'|',metric,':',end=' ')
+        print(avg)
+    return scores,avg
+
+
+# Class
 def create_writer(classifiers,metrics,k,oversamplers,datasets,path):
     writers = dict()
     for classifier in classifiers:
@@ -176,10 +244,3 @@ def show_baseline(dataset,random_state=None,pos_label=None,img_name=None,**args)
     print("The image stored in",path+img_name)
     plt.show()
     
-def gen_df(models,datasets,avg_scores):
-    # avg_scores_df = pd.DataFrame(columns=models+['all safe area','half safe area'],index=datasets)
-    avg_scores_df = pd.DataFrame(columns=models,index=datasets)
-
-    for index,i in zip(avg_scores_df.index,range(len(avg_scores))):
-        avg_scores_df.loc[index] = avg_scores[i]
-    return avg_scores_df

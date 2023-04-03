@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.model_selection import train_test_split
 from COS_Funcs.cluster import clustering
-from COS_Funcs.utils.visualize import plot_line_color,plot_line_width,figsize,vline_color,vline_width,vline_style
+from COS_Funcs.utils.visualize import plot_line_color,plot_line_width,figsize,vline_color,vline_width,vline_style,def_figure
 from COS_Funcs.utils import get_labels
 from COS_Funcs.cos.cos import COS
 from COS_Funcs.cos import generate as G
@@ -19,17 +19,22 @@ from COS_Funcs.baseline.classifiers import do_classification
 from COS_Funcs.baseline.metrics import calc_score
 
 def choose_para(X_train,y_train,X_test,y_test,classifier,metric,N,linkage='ward',L=2):
+    '''
+    @brief Optimize the necessary parameters of COS
+    @return N,alpha,c
+    '''
     N = choose_N(X_train,y_train,linkage='ward',L=2)
-    alpha,_ = choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage='ward',L=2)
+    alpha,_ = choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage,L)
     return N,alpha,0
 
-def choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage='ward',L=2):
+def choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage='ward',L=2,all_safe_weight=1,IR=1):
     pos_label = get_labels(y_train)[0]
-    best_score = 0
+    best_score = 0 - np.inf
     best_alpha = 0
-    for alpha in [0,0.1,0.2,0.3,0.4,0.5,0.6]:
-        X_gen,y_gen,_,_ = COS(X_train,y_train,N,0,alpha,linkage='ward',L=2,shrink_half=True,expand_half=True,all_safe_weight=1,all_safe_gen=G.Gaussian_Generator,half_safe_gen=G.Gaussian_Generator,IR=1)
-        y_pred = do_classification(X_gen,y_gen,X_test,classifier)
+    for alpha in [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8]:
+        X_gen,y_gen,_,_ = COS(X_train,y_train,N,0,alpha,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
+        # HERE
+        y_pred = do_classification(X_gen,y_gen,X_test,classifier)#,metric)
         score = calc_score(metric,y_test,y_pred,pos_label)
         if score > best_score:
             best_score = score
@@ -48,12 +53,38 @@ def choose_N(X_train,y_train,linkage='ward',L=2):
     while N == 1 and step > 1:
         step -= 2
         N = BIC(X_train,y_train,max_N,step,linkage,L)
+    
     if N == 1 or N >= max_N-step:
     # If the BIC NOT works at all
-        #PURITY
-        pass
+        step = 5
+        div = 3
+        max_N = math.ceil(len(X_train)/div)
+        N = PURITY(X_train,y_train,max_N,step,linkage,L) 
     return N
 
+def PURITY(X_train,y_train,max_N=None,step=5,linkage='ward',L=2):
+    # Won't extract reps when optimizing para
+    alpha = None
+    c = None
+    if max_N == None:
+        max_N = math.ceil(len(X_train)/3)
+
+    p_scores = {}
+    N_list = list(range(10,max_N,step))    
+    
+    for n in N_list: 
+        _,_,_,labels = clustering(X_train,y_train,n,c,alpha,linkage,L)
+        p_score = purity_score(y_train, labels)
+        p_scores[n] = (p_score) 
+
+    # def_figure()
+    # plt.plot(list(p_scores.keys()),list(p_scores.values()),label='Purity scores',color=plot_line_color,linewidth=plot_line_width,)
+    kn = KneeLocator(list(p_scores.keys()),list(p_scores.values()),curve='concave', direction='increasing',online=True,)
+    # plt.vlines(kn.knee, plt.ylim()[0], plt.ylim()[1],  linestyles=vline_style,linewidth=vline_width,colors=vline_color)
+    # plt.legend()
+    # plt.show()
+    return kn.knee    
+  
 def BIC(X_train,y_train,max_N=None,step=5,linkage='ward',L=2):
     # Won't extract reps when optimizing para
     alpha = None
@@ -74,9 +105,10 @@ def BIC(X_train,y_train,max_N=None,step=5,linkage='ward',L=2):
             max_bic = BIC_score
         BIC_scores[n] = BIC_score
     
-    # plt.figure(figsize=figsize)
+    # def_figure()
     # plt.plot(list(BIC_scores.keys()),list(BIC_scores.values()),label='BIC scores',color=plot_line_color,linewidth=plot_line_width,)
     # plt.vlines(max_bic_n,plt.ylim()[0], plt.ylim()[1], linestyles=vline_style,linewidth=vline_width,colors=vline_color)
+    # plt.legend()
     # plt.show()
     return max_bic_n 
 
@@ -144,100 +176,71 @@ def purity_score(y: np.ndarray, labels: np.ndarray):
 
 
 
-def cos_para_show(datasets,N,c,alpha,linkage='ward',all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,metric='recall',classification_model='random_forest',k=10,pos_label=None):
-    '''
-    Did not choose generator yet
-    '''
-    dataset_path = 'Dataset/'
-    changing_para = {}
-    if isinstance(c,list):
-        changing_para['c'] = c
-    elif isinstance(N,list):
-        changing_para['N'] = N
-    elif isinstance(alpha,list):
-        changing_para['alpha'] = alpha
-    elif isinstance(linkage,list):
-        changing_para['linkage'] = linkage
+# def cos_para_show(datasets,N,c,alpha,linkage='ward',all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,metric='recall',classification_model='random_forest',k=10,pos_label=None):
+#     '''
+#     Did not choose generator yet
+#     '''
+#     dataset_path = 'Dataset/'
+#     changing_para = {}
+#     if isinstance(c,list):
+#         changing_para['c'] = c
+#     elif isinstance(N,list):
+#         changing_para['N'] = N
+#     elif isinstance(alpha,list):
+#         changing_para['alpha'] = alpha
+#     elif isinstance(linkage,list):
+#         changing_para['linkage'] = linkage
         
         
-    dataset_results = {}
-    for dataset in datasets: 
-        dataset_results[dataset] = []
-        for paras in changing_para.values():
-            for para in tqdm(paras):
+#     dataset_results = {}
+#     for dataset in datasets: 
+#         dataset_results[dataset] = []
+#         for paras in changing_para.values():
+#             for para in tqdm(paras):
                 
-                X,y = baseline.read_data(dataset_path,dataset)
+#                 X,y = baseline.read_data(dataset_path,dataset)
 
-                if pos_label == None:
-                    pos_label = cos_bf.get_labels(y)[0]
+#                 if pos_label == None:
+#                     pos_label = cos_bf.get_labels(y)[0]
 
-                for random_state in range(k):
-                    scores = [] 
-                    X_train,X_test,y_train,y_test = train_test_split(X,y,stratify=y,random_state=random_state)
+#                 for random_state in range(k):
+#                     scores = [] 
+#                     X_train,X_test,y_train,y_test = train_test_split(X,y,stratify=y,random_state=random_state)
 
-                    if 'c' in changing_para.keys():
-                        c = para 
-                        X_train,y_train,num_all_safe,num_half_safe = cos_bf.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
-                    elif 'N' in changing_para.keys():
-                        N = para
-                        X_train,y_train,num_all_safe,num_half_safe = cos_bf.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
-                    elif 'alpha' in changing_para.keys():
-                        alpha = para
-                        X_train,y_train,num_all_safe,num_half_safe = cos_bf.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
-                    elif 'linkage' in changing_para.keys():
-                        linkage = para
-                        X_train,y_train,num_all_safe,num_half_safe = cos_bf.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
+#                     if 'c' in changing_para.keys():
+#                         c = para 
+#                         X_train,y_train,num_all_safe,num_half_safe = cos_bf.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
+#                     elif 'N' in changing_para.keys():
+#                         N = para
+#                         X_train,y_train,num_all_safe,num_half_safe = cos_bf.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
+#                     elif 'alpha' in changing_para.keys():
+#                         alpha = para
+#                         X_train,y_train,num_all_safe,num_half_safe = cos_bf.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
+#                     elif 'linkage' in changing_para.keys():
+#                         linkage = para
+#                         X_train,y_train,num_all_safe,num_half_safe = cos_bf.COS(X_train,y_train,N,c,alpha,linkage=linkage,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen)
 
-                    y_pred = baseline.do_classification(X_train,y_train,X_test,classification_model)
-                    scores.append(baseline.calc_score(metric,y_test,y_pred,pos_label))
+#                     y_pred = baseline.do_classification(X_train,y_train,X_test,classification_model)
+#                     scores.append(baseline.calc_score(metric,y_test,y_pred,pos_label))
                 
-                dataset_results[dataset].append(np.mean(scores))
+#                 dataset_results[dataset].append(np.mean(scores))
 
-    para_name = list(changing_para.keys())[0]
-    paras = list(changing_para.values())[0]
-    plt.figure(figsize=(8,8))
-    plt.xlabel(para_name)
-    plt.ylabel(metric)
-    for dataset in dataset_results.keys():
-        results = dataset_results[dataset]
-        plt.plot(paras,results,label=dataset)
-    plt.legend()
-#     return changing_para,dataset_results
-
-
+#     para_name = list(changing_para.keys())[0]
+#     paras = list(changing_para.values())[0]
+#     plt.figure(figsize=(8,8))
+#     plt.xlabel(para_name)
+#     plt.ylabel(metric)
+#     for dataset in dataset_results.keys():
+#         results = dataset_results[dataset]
+#         plt.plot(paras,results,label=dataset)
+#     plt.legend()
+# #     return changing_para,dataset_results
 
 
 
-def Purity(dataset,model,max_cluster=None):
-    '''
-    Choose the best number of clusters by checking Purity of clusters, use ward linkage by default
-    '''
-    X,y = baseline.read_data(baseline.dataset_path,dataset)
-    X_train,X_test,y_train,y_test = train_test_split(X,y,stratify=y)
-    X_train,y_train = X,y
-    if max_cluster == None:
-        max_cluster = math.ceil(len(X_train)/3)
 
-    p_scores = {}
-    N_list = list(range(10,max_cluster ,10))    
-    
-    for n in N_list: 
-        model = AgglomerativeClustering
-        agg = model(n_clusters=n).fit(X_train)
-        labels = agg.labels_
-        p_score = purity(y_train, labels)
-#         print(p_score)
-        p_scores[n] = (p_score) 
 
-    plt.figure(figsize=(8,8))
-    plt.plot(list(p_scores.keys()),list(p_scores.values()))
 
-    kn = KneeLocator(list(p_scores.keys()),list(p_scores.values()),curve='concave', direction='increasing',online=True,)
-    plt.vlines(kn.knee, plt.ylim()[0], plt.ylim()[1], linestyles='dashed')
-    plt.xlabel('Number of Clusters')
-    plt.ylabel('Cluster Purity Value')
-    plt.show()
-    return kn.knee
 
 
 

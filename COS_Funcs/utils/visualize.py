@@ -52,6 +52,9 @@ import itertools
 from COS_Funcs.utils import get_labels
 from COS_Funcs.cos import generate as G
 
+def def_figure():
+    plt.figure(figsize=figsize)
+    plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
 
 def show_2d_scatter(X,y=None):
     '''

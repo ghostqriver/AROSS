@@ -9,7 +9,8 @@ from sklearn.neural_network import MLPClassifier
 import numpy as np
 
 scoring_dict = {'recall':'recall','f1_score':'f1','g_mean':'g_mean','kappa':'kappa','auc':'roc_auc','accuracy':'accuracy','precision':'precision'}
-def get_dt(X_train, y_train,metric):
+
+def get_dt(X_train,y_train,metric):
     param_grid = { 'criterion':['gini','entropy'],
                   'max_depth': np.arange(3, 200),
                   'max_features': ['auto', 'log2'],
@@ -19,12 +20,21 @@ def get_dt(X_train, y_train,metric):
     adb.fit(X_train, y_train)
     return adb.best_estimator_ 
 
-def get_svm(X_train, y_train,metric):
-    grid = GridSearchCV(estimator=SVC(),param_grid={'C': np.arange(1, 10), 
-                                                    'kernel': ['rbf',],
-                                                    'gamma': ['scale', 'auto'],},scoring=scoring_dict['recall'],n_jobs=-1,)
+def get_svm(X_train,y_train,metric):
+    print('*'*15,'Classifier Optimizing','*'*15)
+    grid = GridSearchCV(estimator=SVC(),param_grid={'C': [0.1,1, 10, 100],
+                                                    'kernel': ['rbf', 'sigmoid'],
+                                                    'gamma': [1,0.1,0.01,0.001],},scoring=scoring_dict[metric],n_jobs=-1)
     grid.fit(X_train, y_train)
     return grid.best_estimator_ 
+
+def get_knn(X_train,y_train,metric):
+    print('*'*15,'Classifier Optimizing','*'*15)
+    grid = GridSearchCV(KNeighborsClassifier(), param_grid = {'n_neighbors':list(range(1, 31, 2))}, scoring=scoring_dict[metric],n_jobs=-1)
+    grid.fit(X_train, y_train)
+    return grid.best_estimator_ 
+
+# def get_
 
 def do_classification(X_train,y_train,X_test,classification_model,metric=None):
     
@@ -48,13 +58,13 @@ def do_classification(X_train,y_train,X_test,classification_model,metric=None):
             model = GaussianNB()
     else:
         if classification_model == 'knn':
-            model = KNeighborsClassifier()
+            model = get_knn(X_train, y_train, metric)
         
         elif classification_model == 'svm':
-            model = get_svm(X_train, y_train,metric)
+            model = get_svm(X_train, y_train, metric)
             
         elif classification_model == 'decision_tree':
-            model = get_dt(X_train, y_train,metric)
+            model = get_dt(X_train, y_train, metric)
         
         elif classification_model == 'random_forest':
             model = RandomForestClassifier()
@@ -64,5 +74,6 @@ def do_classification(X_train,y_train,X_test,classification_model,metric=None):
         
         elif classification_model == 'naive_bayes':
             model = GaussianNB()
+            
     model.fit(X_train,y_train)
     return model.predict(X_test)
