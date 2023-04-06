@@ -14,7 +14,9 @@ def choose_c(cluster):
 def sample_size(N,num_min):
     p = num_min/N
     # size1 might be 0 when num_min == 0 or num_min == N, then set c = 1, choose centroid as rep_point directly
-    if p==0 or p==1:
+    if p==0 and N >= 9:
+        size1 = 0
+    elif p==0 or p==1:
         size1 = 1
     else:
         Z = 1.64
@@ -65,10 +67,13 @@ class Cluster:
         '''
         renew the para and representative points of the cluster
         '''
-        if self.c == 1:
-            tmpSet = [self.center]
+        if self.c == 0:
+            self.rep_points = []
+        elif self.c == 1:
+            self.rep_points = [self.center]
         elif self.num <= self.c: # if total number of points less than c, the representative points will be points itselves
             tmpSet = self.points
+            self.add_shrink(tmpSet,alpha)
         else:
             tmpSet = []
             for i in range(self.c):
@@ -83,7 +88,7 @@ class Cluster:
                         maxPoint = p
                         maxDist = minDist
                 tmpSet.append(maxPoint)
-        self.add_shrink(tmpSet,alpha)
+            self.add_shrink(tmpSet,alpha)
 
     @staticmethod
     def gen_clusters(N,c):

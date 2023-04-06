@@ -41,6 +41,12 @@ plot_line_width = 0.9
 vline_color = '#FFAA15'
 vline_width = 0.9
 vline_style = 'dashed'
+
+syn_mark = '^'
+syn_c = 'red'
+syn_label = 'synthetic samples'
+syn_alpha = alpha
+
 import colorir
 grad = colorir.PolarGrad(["#2304C0","FE6546","80F365","1B205F"])
 colors = iter(grad.n_colors(7)) #next(colors)
@@ -67,7 +73,7 @@ def show_2d_scatter(X,y=None):
     minlabel,majlabel = get_labels(y)
     plt.figure(figsize=figsize)
     plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
-    plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size)
+    plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size,alpha=alpha)
     plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
     plt.legend()
     # plt.show()
@@ -205,21 +211,26 @@ def draw_cycle(center,r,c='k'):
         plt.plot(x, y1, c)
         plt.plot(x, y2, c)
 
-def show_single_area(area,new_points=[],circle_c='k',minlabel=None,majlabel=None):
+def show_single_area(area,new_points=[],circle_c='k',minlabel=None,majlabel=None,close_axis=True):
     
+    # plt.figure(figsize=(6,6))
     if minlabel == None and majlabel ==None:
         minlabel,majlabel = G.get_label_in_areas(area)
 
     min_neighbor = area.nearest_neighbor[area.nearest_neighbor_label == minlabel]
     maj_neighbor = area.nearest_neighbor[area.nearest_neighbor_label == majlabel]
-    plt.scatter(min_neighbor[:,0],min_neighbor[:,1],marker='*',c='blue',label = 'minority neighbors')
-    plt.scatter(maj_neighbor[:,0],maj_neighbor[:,1],marker='.',c='k',label = 'majority neighbors')
+    plt.scatter(min_neighbor[:,0],min_neighbor[:,1],marker=min_mark,c=min_color,label=min_label)
+    plt.scatter(maj_neighbor[:,0],maj_neighbor[:,1],marker=maj_mark,c=maj_color,label=maj_label)
 
-    plt.scatter(area.rep_point[0],area.rep_point[1],c='black',marker='x',label = 'rep_points')
+    plt.scatter(area.rep_point[0],area.rep_point[1],c=rep_color,marker=rep_mark,label=rep_label[:-1]    )
     if len(new_points) > 0:
-        plt.scatter(new_points[:,0],new_points[:,1],marker = '$\heartsuit$',c = 'red',label = 'synthetic samples',alpha = 0.5)
+        plt.scatter(new_points[:,0],new_points[:,1],marker=syn_mark,c=syn_c,label=syn_label,alpha=syn_alpha)
     draw_cycle(area.rep_point,area.radius,c=circle_c)
+    if close_axis:
+        plt.xticks([])
+        plt.yticks([])
     plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
+    # plt.legend(loc=3)
 
 
 def show_oversampling(X,y,X_oversampled,y_oversampled):

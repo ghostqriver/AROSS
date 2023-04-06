@@ -49,11 +49,13 @@ def Gaussian_Step(area,radius_new,num,scale):
     
     new_points = []
     for i in range(num):
-        ratio = np.random.normal(scale=scale,size = len(area.rep_point))
+        ratio = np.random.normal(scale=scale,size = len(area.rep_point),)
         # To ensure the ratio should in the range [-1,1]
         while (ratio>1).any() or (ratio<-1).any():
             ratio = np.random.normal(scale=scale,size = len(area.rep_point))
-        new_points.append(area.rep_point + radius_new * ratio)
+            
+        new_point = area.rep_point + radius_new * ratio
+        new_points.append(new_point)
     return new_points
 
 

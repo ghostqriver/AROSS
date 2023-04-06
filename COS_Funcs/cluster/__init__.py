@@ -2,7 +2,7 @@ from COS_Funcs.cluster import cure
 from COS_Funcs.cluster import cure_pyc
 from COS_Funcs.cluster import agglomerative
 
-def clustering(X,y,N,c,alpha,linkage='cure_single',L=2):
+def clustering(X,y,N,c,alpha,linkage='ward',L=2):
     
     num_expected_clusters = N
 

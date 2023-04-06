@@ -25,6 +25,7 @@ from COS_Funcs.baseline.metrics import calc_score
 from COS_Funcs.cos import optimize
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 import warnings
 import time
 import math
@@ -122,14 +123,14 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage='ward',L=2,a
             
             for dataset in datasets: 
 
-                # try:
-                scores,score = cos_baseline_(dataset,metric,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
+                try:
+                    scores,score = cos_baseline_(dataset,metric,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
 
-                # except BaseException as e: 
-                print('COS cause an error on',dataset,'with',classifier)
-                scores = []
-                score = None
-                continue 
+                except BaseException as e: 
+                    print('COS cause an error on',dataset,'with',classifier)
+                    scores = []
+                    score = None
+                    continue 
 
                 key_name_ = key_name(dataset,sheet_name_)
                 K_fold_dict[key_name_] = scores

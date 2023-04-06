@@ -14,7 +14,7 @@ from COS_Funcs.utils import get_labels
 from COS_Funcs.cos.nearest_neighbor import nn_kd,create_kd
 from imblearn.under_sampling import TomekLinks
 
-def COS(X,y,N,c,alpha,linkage='cure_single',L=2,shrink_half=True,expand_half=True,all_safe_weight=1,all_safe_gen=G.Gaussian_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,visualize=False):
+def COS(X,y,N,c,alpha,linkage='ward',L=2,shrink_half=True,expand_half=True,all_safe_weight=1,all_safe_gen=G.Gaussian_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,visualize=False):
     
     minlabel,majlabel = get_labels(y)
     clusters,all_reps,_,_ = clustering(X,y,N,c,alpha,linkage,L)
@@ -41,7 +41,7 @@ def COS(X,y,N,c,alpha,linkage='cure_single',L=2,shrink_half=True,expand_half=Tru
     #     print(over_size - under_size,'samples was undersampled.')
     return X_generated,y_generated,len(min_all_safe_area),len(min_half_safe_area)
     
-def safe_areas(X,all_reps,y,shrink_half=False,expand_half=True,k=3,minlabel=None,majlabel=None):
+def safe_areas(X,all_reps,y,shrink_half=True,expand_half=True,k=3,minlabel=None,majlabel=None):
     '''
     Generate all the representative points's area:
     if k neighbors of rep_point are all belonging to the minority class --> min safe area
@@ -179,7 +179,7 @@ class Area():
         else:
             add = 2
             cnt = 0
-            while cnt < 5:
+            while cnt < 3:
                 index,label,dist = self.expand(tree,y,k,add)
                 self.append_neighbor(X[index],index,label,dist)
                 k += add
@@ -274,14 +274,14 @@ def generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_
         if areas == min_all_safe_area:
             gen = all_safe_gen
             area_name = 'all safe area'
-            total_num = total_num_all
-            num_n = num_n_min_all
+            total_num = total_num_all 
+            num_n = num_n_min_all # all instances in all safe 
 
         elif areas == min_half_safe_area:
             gen = half_safe_gen
             area_name = 'half safe area'
-            total_num = total_num_half
-            num_n = num_n_min_half
+            total_num = total_num_half 
+            num_n = num_n_min_half #  all instances in half safe
         
         if len(areas) == 0:
             continue
