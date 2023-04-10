@@ -14,18 +14,19 @@ from COS_Funcs.utils import get_labels
 from COS_Funcs.cos.nearest_neighbor import nn_kd,create_kd
 from imblearn.under_sampling import TomekLinks
 
-def COS(X,y,N,c,alpha,linkage='ward',L=2,shrink_half=True,expand_half=True,all_safe_weight=1,all_safe_gen=G.Gaussian_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,IR=1,visualize=False):
+def COS(X,y,N,c,alpha,linkage='ward',L=2,shrink_half=True,expand_half=True,all_safe_weight=1,all_safe_gen=G.Gaussian_Generator,half_safe_gen=G.Gaussian_Generator,Gaussian_scale=None,IR=1,visualize=False):
     
     minlabel,majlabel = get_labels(y)
-    clusters,all_reps,_,_ = clustering(X,y,N,c,alpha,linkage,L)
-    areas,min_all_safe_area,min_half_safe_area = safe_areas(X,all_reps,y,shrink_half=shrink_half,expand_half=expand_half,minlabel=minlabel,majlabel=majlabel) 
+    clusters,all_reps,_,labels = clustering(X,y,N,c,alpha,linkage,L)
+    tree = create_kd(X)
+    areas,min_all_safe_area,min_half_safe_area = safe_areas(X,tree,all_reps,y,shrink_half=shrink_half,expand_half=expand_half,minlabel=minlabel,majlabel=majlabel) 
     if visualize == True:
         print('Clusters:')
-        V.show_clusters(clusters)
+        V.show_clusters_(X,labels,y,all_reps)
         print('Safe areas:')
         V.show_areas(X,y,min_all_safe_area,min_half_safe_area)
 
-    X_generated,y_generated = oversampling(X,y,min_all_safe_area,min_half_safe_area,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen,Gaussian_scale=Gaussian_scale,minlabel=minlabel,majlabel=majlabel,all_safe_weight=all_safe_weight,IR=IR,show=visualize)
+    X_generated,y_generated = oversampling(X,tree,y,min_all_safe_area,min_half_safe_area,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen,Gaussian_scale=Gaussian_scale,minlabel=minlabel,majlabel=majlabel,all_safe_weight=all_safe_weight,IR=IR,show=visualize)
     over_size = len(X_generated)
     if visualize == True:
         print('Generated dataset:') 
@@ -41,7 +42,7 @@ def COS(X,y,N,c,alpha,linkage='ward',L=2,shrink_half=True,expand_half=True,all_s
     #     print(over_size - under_size,'samples was undersampled.')
     return X_generated,y_generated,len(min_all_safe_area),len(min_half_safe_area)
     
-def safe_areas(X,all_reps,y,shrink_half=True,expand_half=True,k=3,minlabel=None,majlabel=None):
+def safe_areas(X,tree,all_reps,y,shrink_half=True,expand_half=True,k=3,minlabel=None,majlabel=None):
     '''
     Generate all the representative points's area:
     if k neighbors of rep_point are all belonging to the minority class --> min safe area
@@ -57,7 +58,6 @@ def safe_areas(X,all_reps,y,shrink_half=True,expand_half=True,k=3,minlabel=None,
     areas = []
     min_all_safe_area = []
     min_half_safe_area = []
-    tree = create_kd(X)
     for rep in all_reps:
         area = Area(rep)
         area.gen_safe_area(X,y,tree,minlabel,majlabel,shrink_half,expand_half,k)
@@ -91,7 +91,8 @@ class Area():
         self.num_neighbor = 0
         self.radius = 0
         self.safe = 0 # 0 no_safe 1 min_all_safe 2 min_half_safe 
-
+        self.num_min = 0 
+        
     def append_neighbor(self,data,index,label,dist):
         '''
         @brief Append the neighbor info to arrays
@@ -112,7 +113,7 @@ class Area():
         self.nearest_neighbor_label = self.nearest_neighbor_label[:-1]
         self.nearest_neighbor_dist = self.nearest_neighbor_dist[:-1]
 
-    def renew_paras(self,safe):
+    def renew_paras(self,safe,minlabel):
         '''
         @note Will be called after generate the safe area
         '''
@@ -120,7 +121,9 @@ class Area():
         self.safe = safe 
         # the distance from rep_point to farthest neighbor in the area
         self.radius = self.nearest_neighbor_dist[-1]
-
+        self.num_min = len(self.nearest_neighbor_label[self.nearest_neighbor_label == minlabel])
+        
+        
     def gen_safe_area(self,X,y,tree,minlabel=None,majlabel=None,shrink_half=True,expand_half=True,k=3):
         '''
         @brief Generate safe/half safe area
@@ -202,7 +205,7 @@ class Area():
                     self.del_neighbor()
                 # Impossible to be all safe
 
-        self.renew_paras(safe)
+        self.renew_paras(safe,minlabel)
 
     def expand(self,tree,y,k,add):
         inds,dists = nn_kd([self.rep_point],k+add,tree)
@@ -257,7 +260,7 @@ def calc_weight(total_num,min_all_safe_area,min_half_safe_area,all_safe_weight):
     return total_num_all,total_num_half 
     
 
-def generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_num_half,num_n_min_all,num_n_min_half,all_safe_weight,IR,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,minlabel=None,show=False):
+def generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_num_half,num_n_min_all,num_n_min_half,all_safe_weight,IR,all_safe_gen=G.Gaussian_Generator,half_safe_gen=G.Gaussian_Generator,Gaussian_scale=None,tree=None,y=None,minlabel=None,show=False):
     '''
     Return all generated synthetic points in all safe area and half safe area
     '''
@@ -276,13 +279,14 @@ def generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_
             area_name = 'all safe area'
             total_num = total_num_all 
             num_n = num_n_min_all # all instances in all safe 
-
+            tree_ = None
         elif areas == min_half_safe_area:
             gen = half_safe_gen
             area_name = 'half safe area'
             total_num = total_num_half 
             num_n = num_n_min_half #  all instances in half safe
-        
+            tree_ = tree
+            
         if len(areas) == 0:
             continue
 
@@ -293,27 +297,33 @@ def generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_
             label = np.array(area.nearest_neighbor_label)
             num_neighbor = len(neighbor[label==minlabel])   
             gen_num = int(total_num*(num_neighbor/num_n))
-            
-
-            para = G.check_parameter(half_safe_gen,minlabel,Gaussian_scale)
-            new_points += list(gen(area,gen_num))
-            counter += gen_num
 
             if show == True:
                 print(f"{num_neighbor} minority neighbors in current area, so generate {gen_num} points around "+ area_name +F" of rep point {area.rep_point}")
+            
+            # para = G.check_parameter(half_safe_gen,minlabel,Gaussian_scale)
+            # Gaussian_Generator(area,num,scale=None,tree=None,y_train=None,min_label=1)
+            gen_points = list(gen(area,gen_num,scale=Gaussian_scale,tree=tree_,y_train=y,min_label=minlabel))
+            new_points += gen_points
+            gen_num_ = len(gen_points)
+            counter += gen_num_
+            
+            if show == True and gen_num_!=gen_num:
+                print(f"* Failed with generating {gen_num} points, only {gen_num_} points generated around "+ area_name +F" of rep point {area.rep_point}")
         
         area_iter = itertools.cycle(areas)
         while counter < total_num:
             area = next(area_iter)
-            new_points += list(gen(area,1))
-            counter += 1 
-            if show == True:
+            gen_points = list(gen(area,1,scale=Gaussian_scale,tree=tree_,y_train=y,min_label=minlabel))
+            new_points += gen_points 
+            counter += len(gen_points) 
+            if show == True and len(gen_points)==1:
                 print(f"generate 1 points around "+ area_name +F" of rep point {area.rep_point}")
 
     return np.array(new_points)
 
 
-def oversampling(X,y,min_all_safe_area,min_half_safe_area,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,minlabel=None,majlabel=None,all_safe_weight=2,IR=1,show=False):
+def oversampling(X,tree,y,min_all_safe_area,min_half_safe_area,all_safe_gen=G.Smote_Generator,half_safe_gen=G.Smote_Generator,Gaussian_scale=None,minlabel=None,majlabel=None,all_safe_weight=2,IR=1,show=False):
     '''
     Do the oversampling on safe areas 
     X: data
@@ -347,7 +357,7 @@ def oversampling(X,y,min_all_safe_area,min_half_safe_area,all_safe_gen=G.Smote_G
     # How many points will be generate in all/half safe areas
     total_num_all,total_num_half = calc_weight(total_num,min_all_safe_area,min_half_safe_area,all_safe_weight)
     
-    generated_points = generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_num_half,num_n_min_all,num_n_min_half,all_safe_weight,IR,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen,Gaussian_scale=Gaussian_scale,minlabel=minlabel,show=show)
+    generated_points = generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_num_half,num_n_min_all,num_n_min_half,all_safe_weight,IR,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen,Gaussian_scale=Gaussian_scale,tree=tree,y=y,minlabel=minlabel,show=show)
    
     new_y = np.ones(len(generated_points))
     new_y = new_y * minlabel

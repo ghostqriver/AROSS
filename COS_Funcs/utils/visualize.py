@@ -30,7 +30,9 @@ point_colors = ['#1F77B4',
 
 alpha = 0.8
 all_safe_color = 'k'
+all_safe_label='all safe area'
 half_safe_color = 'brown'
+half_safe_label='half safe area'
 
 grid_color = 'gray'
 grid_line = 'dashed'
@@ -45,7 +47,7 @@ vline_style = 'dashed'
 syn_mark = '^'
 syn_c = 'red'
 syn_label = 'synthetic samples'
-syn_alpha = alpha
+syn_alpha = 0.6
 
 import colorir
 grad = colorir.PolarGrad(["#2304C0","FE6546","80F365","1B205F"])
@@ -71,12 +73,11 @@ def show_2d_scatter(X,y=None):
         plt.show()
         return 
     minlabel,majlabel = get_labels(y)
-    plt.figure(figsize=figsize)
+    def_figure()
     plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
     plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size,alpha=alpha)
-    plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
     plt.legend()
-    # plt.show()
+    plt.show()
 
 def show_clusters(clusters):
     '''
@@ -84,7 +85,7 @@ def show_clusters(clusters):
     @para 
         clusters: the list contain cluster objects
     '''
-    plt.figure(figsize=figsize)
+    def_figure()
     point_colors_ = itertools.cycle(point_colors)
     for cluster in clusters:
         point_color = next(point_colors_)
@@ -93,15 +94,16 @@ def show_clusters(clusters):
         points = np.array(cluster.points)
         rep_points = np.array(cluster.rep_points)
         plt.scatter(points[:,0],points[:,1],marker=point_mark,c=point_color,s=point_size)
-        plt.scatter(rep_points[:,0],rep_points[:,1],marker=rep_mark,c=rep_color,s=rep_size)
-    plt.scatter(rep_points[:,0],rep_points[:,1],marker=rep_mark,c=rep_color,s=rep_size,label=rep_label)
+        if len(rep_points) > 0:
+            last_rep = rep_points
+            plt.scatter(rep_points[:,0],rep_points[:,1],marker=rep_mark,c=rep_color,s=rep_size)
+    plt.scatter(last_rep[:,0],last_rep[:,1],marker=rep_mark,c=rep_color,s=rep_size,label=rep_label)
     plt.title('clusters')
-    plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
     plt.legend()
-    # plt.show()
+    plt.show()
 
 def show_clusters_(X,labels,y,all_reps):
-    plt.figure(figsize=figsize)
+    def_figure()    
     minlabel,majlabel = get_labels(y)
     clus_len = max(labels)
     point_colors_ = itertools.cycle(point_colors)
@@ -115,10 +117,9 @@ def show_clusters_(X,labels,y,all_reps):
     plt.scatter(clus[ys==minlabel,0],clus[ys==minlabel,1],marker=min_mark,s=min_size,c=point_color,label=min_label)
     plt.scatter(clus[ys==majlabel,0],clus[ys==majlabel,1],alpha=alpha,marker=maj_mark,s=maj_size,c=point_color,label=maj_label)
     plt.scatter(all_reps[:,0],all_reps[:,1],marker=rep_mark,c=rep_color,s=rep_size,alpha=alpha,label=rep_label)
-    plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
 
     plt.legend()
-#     plt.show()
+    plt.show()
 
 def show_rep_points(X,y,clusters):
     '''
@@ -127,7 +128,7 @@ def show_rep_points(X,y,clusters):
         clusters: the list contain cluster objects
     '''
     minlabel,majlabel = get_labels(y)
-    plt.figure(figsize=figsize)
+    def_figure()
     plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
     plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size)
     
@@ -136,21 +137,9 @@ def show_rep_points(X,y,clusters):
             rep_points = np.array(cluster.rep_points)
             plt.scatter(rep_points[:,0],rep_points[:,1],marker=rep_mark,c=rep_color,s=rep_size,alpha=alpha)
     plt.scatter(rep_points[0,0],rep_points[0,1],marker=rep_mark,c=rep_color,label=rep_label,s=rep_size)   
-    plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)   
     plt.legend()
+    plt.show()
 
-    # plt.show()
-
-
-def show_clusters_rep_points(X,y,clusters):
-    '''
-    Show the figure of show_clusters and show_rep_points
-    '''
-    plt.figure(figsize=(16,8))
-    plt.subplot(1,2,1)
-    show_clusters(clusters)
-    plt.subplot(1,2,2)
-    show_rep_points(X,y,clusters)
 
 
 def show_areas(X,y,min_all_safe_area,min_half_safe_area,):
@@ -163,7 +152,7 @@ def show_areas(X,y,min_all_safe_area,min_half_safe_area,):
 
     minlabel,majlabel = get_labels(y)
 
-    plt.figure(figsize=figsize)
+    def_figure()
     # The original dataset
     plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
     plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size)
@@ -198,22 +187,21 @@ def show_areas(X,y,min_all_safe_area,min_half_safe_area,):
         plt.plot(x, y2, c=half_safe_color)
 
     plt.scatter(rep_point[0],rep_point[1],marker=rep_mark,c=rep_color,s=rep_size,label=rep_label) 
-    plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
     plt.legend()
-    # plt.show()
+    plt.show()
 
 
 def draw_cycle(center,r,c='k'):
 
-        x = np.linspace(center[0] - r, center[0] + r, 5000)
-        y1 = np.sqrt(abs(r**2 - (x - center[0])**2)) + center[1]
-        y2 = -np.sqrt(abs(r**2 - (x - center[0])**2)) + center[1]
-        plt.plot(x, y1, c)
-        plt.plot(x, y2, c)
+    x = np.linspace(center[0] - r, center[0] + r, 5000)
+    y1 = np.sqrt(abs(r**2 - (x - center[0])**2)) + center[1]
+    y2 = -np.sqrt(abs(r**2 - (x - center[0])**2)) + center[1]
+    plt.plot(x, y1, c)
+    plt.plot(x, y2, c)
 
 def show_single_area(area,new_points=[],circle_c='k',minlabel=None,majlabel=None,close_axis=True):
     
-    # plt.figure(figsize=(6,6))
+    plt.figure(figsize=(6,6))
     if minlabel == None and majlabel ==None:
         minlabel,majlabel = G.get_label_in_areas(area)
 
@@ -230,7 +218,8 @@ def show_single_area(area,new_points=[],circle_c='k',minlabel=None,majlabel=None
         plt.xticks([])
         plt.yticks([])
     plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
-    # plt.legend(loc=3)
+    plt.legend(loc=3)
+    plt.show()
 
 
 def show_oversampling(X,y,X_oversampled,y_oversampled):
@@ -240,54 +229,55 @@ def show_oversampling(X,y,X_oversampled,y_oversampled):
     Or it will be confused with sequence of data.  
     '''
     origin_index = len(X)
-    show_2d_scatter(X,y)
-    plt.scatter(X_oversampled[origin_index:,0],X_oversampled[origin_index:,1],marker = '$\heartsuit$',c = 'red',label = 'synthetic samples',alpha = 0.5)
+    minlabel,majlabel = get_labels(y)
+    def_figure()
+    plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
+    plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size,alpha=alpha)
+    plt.scatter(X_oversampled[origin_index:,0],X_oversampled[origin_index:,1],marker=syn_mark,c=syn_c,label=syn_label,alpha=syn_alpha)
     plt.legend()
-    # plt.show()
+    plt.show()
 
 
 def show_cos(X,y,X_oversampled,y_oversampled,min_all_safe_area,min_half_safe_area,minlabel=None,majlabel=None):
     
     if minlabel == None and majlabel ==None:
             minlabel,majlabel = get_labels(y)
-
-    plt.figure(figsize=figsize)
+    def_figure()
     # The original dataset
-    plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker='*',c='blue',label='minority class')
-    plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker='.',c='k',label='majority class')
+    plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
+    plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size)
 
     # The areas
-    plt.plot(X[0,0],X[0,1], c='k',label='all safe area')
-    plt.plot(X[0,0],X[0,1], c='brown',label='half safe area')
+    plt.plot(X[0,0],X[0,1], c=all_safe_color,label=all_safe_label)
+    plt.plot(X[0,0],X[0,1], c=half_safe_color,label=half_safe_label)
     
     for area in min_all_safe_area:
         radius = area.radius
         rep_point = area.rep_point
-        plt.scatter(rep_point[0],rep_point[1],c='black',marker='x')
+        plt.scatter(rep_point[0],rep_point[1],c=rep_color,marker=rep_mark)
         
         #draw the circle
         x = np.linspace(rep_point[0] - radius, rep_point[0] + radius, 5000)
         y1 = np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
         y2 = -np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
-        plt.plot(x, y1, c='k')
-        plt.plot(x, y2, c='k')
+        plt.plot(x, y1, c=all_safe_color)
+        plt.plot(x, y2, c=all_safe_color)
 
         
     for area in min_half_safe_area:
         radius = area.radius
         rep_point = area.rep_point
-        plt.scatter(rep_point[0],rep_point[1],c='black',marker='x')
+        plt.scatter(rep_point[0],rep_point[1],c=rep_color,marker=rep_mark)
         
         #draw the circle
         x = np.linspace(rep_point[0] - radius, rep_point[0] + radius, 5000)
         y1 = np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
         y2 = -np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
-        plt.plot(x, y1, c='brown')
-        plt.plot(x, y2, c='brown')
+        plt.plot(x, y1, c=half_safe_color)
+        plt.plot(x, y2, c=half_safe_color)
 
     origin_index = len(X)
-    plt.scatter(X_oversampled[origin_index:,0],X_oversampled[origin_index:,1],marker = '$\heartsuit$',c = 'red',label = 'synthetic samples',alpha = 0.5)
-    plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
+    plt.scatter(X_oversampled[origin_index:,0],X_oversampled[origin_index:,1],marker=syn_mark,c=syn_c,label=syn_label,alpha=syn_alpha)
     plt.legend()
     plt.show()
 
