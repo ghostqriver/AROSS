@@ -23,7 +23,7 @@ def choose_para(X_train,y_train,X_test,y_test,classifier,metric,N,linkage='ward'
     @brief Optimize the necessary parameters of COS
     @return N,alpha,c
     '''
-    N = choose_N(X_train,y_train,linkage='ward',L=2)
+    N = choose_N(X_train,y_train,linkage=linkage,L=2)
     alpha,_ = choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage,L)
     return N,alpha,0
 

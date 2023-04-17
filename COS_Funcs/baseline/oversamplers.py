@@ -1,4 +1,4 @@
-from imblearn.over_sampling import SMOTE,SVMSMOTE,ADASYN
+from imblearn.over_sampling import SMOTE,SVMSMOTE,ADASYN,RandomOverSampler
 from imblearn.combine import SMOTETomek,SMOTEENN
 from smote_variants import (DBSMOTE,DSMOTE,SMOTE_D,CURE_SMOTE,kmeans_SMOTE,SOMO,NRAS,SYMPROD,G_SMOTE,RWO_sampling,ANS)
 # Comment this after completing GAN baseline
@@ -8,6 +8,10 @@ def do_oversampling(model,X_train,y_train,**args):
     
     if model == 'original':
         return X_train,y_train
+    
+    elif model == 'random':
+        random = RandomOverSampler()
+        return random.fit_resample(X_train,y_train)
     
     elif model == 'smote':
         smote = SMOTE()

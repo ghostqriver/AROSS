@@ -2,8 +2,9 @@ dataset_path = 'Datasets/'
 
 oversamplers = ['original','smote','db_smote','smote_d','cure_smote','kmeans_smote','adasyn','somo','symprod',
                 'smote_enn','smote_tl','nras','g_smote','rwo_sampling','ans','svm_smote',
-                'wgan', 'wgan_filter' 
+                # 'wgan', 'wgan_filter' 
                 # 'cos'
+                # 'random'
                 ] 
 
 classifiers = ['knn','svm','decision_tree','random_forest','mlp','naive_bayes'] 
@@ -13,11 +14,13 @@ metrics = ['recall','f1_score','g_mean','kappa','auc','accuracy','precision']
 save_path = 'test/'
 cos_save_path = 'costest/'
 gan_save_path = 'gantest/'
+random_save_path = 'test/random/'
 
 import os
 import glob
 datasets = glob.glob(os.path.join(dataset_path,'*.csv'))
 
+from .ccpc import linkages
 from COS_Funcs.utils import *
 from COS_Funcs.baseline.classifiers import do_classification
 from COS_Funcs.baseline.oversamplers import do_oversampling
@@ -40,6 +43,8 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
     
     if 'cos' in oversamplers:
         path = cos_save_path
+    elif 'random' in oversamplers:
+        path = random_save_path
     elif 'wgan' in oversamplers:
         path = gan_save_path
     else:
@@ -63,39 +68,39 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
 
                 pos_label = get_labels(y)[0]
                 
-                try:
-                    start = time.time()
-                    if oversampler == 'cos':
-                        X_train,y_train,num_all_safe,num_half_safe = do_oversampling(oversampler,X_train,y_train,args) 
+                # try:
+                start = time.time()
+                if oversampler == 'cos':
+                    X_train,y_train,num_all_safe,num_half_safe = do_oversampling(oversampler,X_train,y_train,args) 
 
-                    elif oversampler == 'wgan' or oversampler == 'wgan_filter':
-                        X_train,y_train = do_oversampling(oversampler,X_train,y_train,X_test=X_test,y_test=y_test,classifier=classifiers[0]) 
-                        
-                    else:
-                        X_train,y_train = do_oversampling(oversampler,X_train,y_train) 
-                        
-                    end = time.time()
+                elif oversampler == 'wgan' or oversampler == 'wgan_filter':
+                    X_train,y_train = do_oversampling(oversampler,X_train,y_train,X_test=X_test,y_test=y_test,classifier=classifiers[0]) 
                     
-                    print('cost:',end-start)
+                else:
+                    X_train,y_train = do_oversampling(oversampler,X_train,y_train) 
                     
-                    for classifier in classifiers:     
-                        y_pred = do_classification(X_train,y_train,X_test,classifier)
-                        for metric in metrics:
-                            score = calc_score(metric,y_test,y_pred,pos_label)
-                            if show_folds:
-                                print(random_state+1,'|',dataset,'|',oversampler,'|',classifier,'|',metric,':',end='')
-                                print(score)
+                end = time.time()
+                
+                print('cost:',end-start)
+                
+                for classifier in classifiers:     
+                    y_pred = do_classification(X_train,y_train,X_test,classifier)
+                    for metric in metrics:
+                        score = calc_score(metric,y_test,y_pred,pos_label)
+                        if show_folds:
+                            print(random_state+1,'|',dataset,'|',oversampler,'|',classifier,'|',metric,':',end='')
+                            print(score)
 
-                            writers[classifier][metric]['scores_df'][random_state][oversampler].loc[dataset] = score
+                        writers[classifier][metric]['scores_df'][random_state][oversampler].loc[dataset] = score
                     
-                except BaseException as e: 
-                    print(oversampler,'cause an error on',dataset)
-                    continue
+                # except BaseException as e: 
+                #     print(oversampler,'cause an error on',dataset)
+                #     continue
                 
     write_writer(writers,classifiers,metrics,k,oversamplers,datasets)
     return writers
 
-def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage='ward',L=2,all_safe_weight=1,IR=1,show_folds=True):
+def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage=None,L=2,all_safe_weight=1,IR=1,show_folds=True):
 
     path = cos_save_path
     make_dir(path)
@@ -122,9 +127,11 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage='ward',L=2,a
             sheet_name_ = sheet_name(metric,classifier,k)
             
             for dataset in datasets: 
-
+                if linkage == None:
+                    # Choose the linkage from CCPC
+                    linkage = linkages[dataset]
                 try:
-                    scores,score = cos_baseline_(dataset,metric,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
+                    scores,score,alphas = cos_baseline_(dataset,metric,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
 
                 except BaseException as e: 
                     print('COS cause an error on',dataset,'with',classifier)
@@ -134,6 +141,7 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage='ward',L=2,a
 
                 key_name_ = key_name(dataset,sheet_name_)
                 K_fold_dict[key_name_] = scores
+                K_fold_dict[key_alpha_] = alphas
                 df['cos'].loc[dataset] = score
 
             df.index = index
@@ -145,13 +153,15 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage='ward',L=2,a
     
 def cos_baseline_(dataset,metric,classifier,k=10,linkage='ward',L=2,all_safe_weight=1,IR=1,show_folds=True):
     scores = []
+    # For recommend best alpha interval
+    alphas = []
     X,y = read_data(dataset)
     for random_state in range(k):
         X_train,X_test,y_train,y_test = split_data(X,y)
         pos_label = get_labels(y)[0]
 
         # Choose N
-        N = optimize.choose_N(X_train, y_train)
+        N = optimize.choose_N(X_train, y_train, linkage=linkage, L=L)
         
         # Choose alpha
         best_alpha,best_score = optimize.choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
@@ -159,11 +169,12 @@ def cos_baseline_(dataset,metric,classifier,k=10,linkage='ward',L=2,all_safe_wei
             print(random_state+1,'|',dataset,'|',classifier,'|',metric,':',end=' ')
             print(best_score)
         scores.append(best_score)
+        alphas.append(best_alpha)
     avg = np.mean(scores)
     if show_folds:      
         print(dataset,'|',classifier,'|',metric,':',end=' ')
         print(avg)
-    return scores,avg
+    return scores,avg,alphas
 
 
 # Class
