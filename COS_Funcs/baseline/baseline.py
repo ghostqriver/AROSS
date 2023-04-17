@@ -128,9 +128,10 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage=None,L=2,all
             sheet_name_ = sheet_name(metric,classifier,k)
             
             for dataset in datasets: 
+                print(dataset)
                 if linkage == None:
                     # Choose the linkage from CCPC
-                    linkage = linkages[dataset]
+                    linkage = linkages[os.path.basename(dataset)]
                 try:
                     if 'page-blocks1vs2345' in  dataset or 'oil_spill' in dataset:
                         # The dataset might meet the error

@@ -18,7 +18,7 @@ from COS_Funcs.cos import generate as G
 from COS_Funcs.baseline.classifiers import do_classification
 from COS_Funcs.baseline.metrics import calc_score
 
-def choose_para(X_train,y_train,X_test,y_test,classifier,metric,N,linkage='ward',L=2):
+def choose_para(X_train,y_train,X_test,y_test,classifier,metric,N,linkage,L=2):
     '''
     @brief Optimize the necessary parameters of COS
     @return N,alpha,c
@@ -27,11 +27,12 @@ def choose_para(X_train,y_train,X_test,y_test,classifier,metric,N,linkage='ward'
     alpha,_ = choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage,L)
     return N,alpha,0
 
-def choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage='ward',L=2,all_safe_weight=1,IR=1):
+def choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage,L=2,all_safe_weight=1,IR=1):
+    print('Choosing alpha')
     pos_label = get_labels(y_train)[0]
     best_score = 0 - np.inf
     best_alpha = 0
-    for alpha in [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8]:
+    for alpha in [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7]:
         X_gen,y_gen,_,_ = COS(X_train,y_train,N,0,alpha,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
         # HERE
         y_pred = do_classification(X_gen,y_gen,X_test,classifier)#,metric)
@@ -41,7 +42,7 @@ def choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage='ward
             best_alpha = alpha
     return best_alpha,best_score
 
-def choose_N(X_train,y_train,linkage='ward',L=2):
+def choose_N(X_train,y_train,linkage,L=2):
     step = 5
     div = 3
     max_N = math.ceil(len(X_train)/div)

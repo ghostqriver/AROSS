@@ -12,9 +12,9 @@ from COS_Funcs.cluster import clustering
 from COS_Funcs.utils import visualize as V
 from COS_Funcs.utils import get_labels
 from COS_Funcs.cos.nearest_neighbor import nn_kd,create_kd
-from imblearn.under_sampling import TomekLinks
+# from imblearn.under_sampling import TomekLinks
 
-def COS(X,y,N,c,alpha,linkage='ward',L=2,shrink_half=True,expand_half=True,all_safe_weight=1,all_safe_gen=G.Gaussian_Generator,half_safe_gen=G.Gaussian_Generator,Gaussian_scale=None,IR=1,visualize=False):
+def COS(X,y,N,c,alpha,linkage,L=2,shrink_half=True,expand_half=True,all_safe_weight=1,all_safe_gen=G.Gaussian_Generator,half_safe_gen=G.Gaussian_Generator,Gaussian_scale=None,IR=1,visualize=False):
     
     minlabel,majlabel = get_labels(y)
     clusters,all_reps,_,labels = clustering(X,y,N,c,alpha,linkage,L)
@@ -25,7 +25,6 @@ def COS(X,y,N,c,alpha,linkage='ward',L=2,shrink_half=True,expand_half=True,all_s
         V.show_clusters_(X,labels,y,all_reps)
         print('Safe areas:')
         V.show_areas(X,y,min_all_safe_area,min_half_safe_area)
-
     X_generated,y_generated = oversampling(X,tree,y,min_all_safe_area,min_half_safe_area,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen,Gaussian_scale=Gaussian_scale,minlabel=minlabel,majlabel=majlabel,all_safe_weight=all_safe_weight,IR=IR,show=visualize)
     over_size = len(X_generated)
     if visualize == True:
@@ -34,12 +33,6 @@ def COS(X,y,N,c,alpha,linkage='ward',L=2,shrink_half=True,expand_half=True,all_s
         plt.show()
         print('All:')
         V.show_cos(X,y,X_generated,y_generated,min_all_safe_area,min_half_safe_area,minlabel,majlabel)
-
-    # tl = TomekLinks()
-    # X_generated,y_generated  = tl.fit_resample(X_generated,y_generated)
-    # under_size = len(X_generated)
-    # if visualize == True:
-    #     print(over_size - under_size,'samples was undersampled.')
     return X_generated,y_generated,len(min_all_safe_area),len(min_half_safe_area)
     
 def safe_areas(X,tree,all_reps,y,shrink_half=True,expand_half=True,k=3,minlabel=None,majlabel=None):
