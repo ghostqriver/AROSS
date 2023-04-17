@@ -54,7 +54,13 @@ class Logger(object):
 
     def flush(self):
         pass
-
+    
+def base_file(path):
+    if '\\' in path:
+        return path.split('\\')[-1]
+    elif '/' in path:
+        return path.split('/')[-1]
+        
 def make_dir(dir):
     if not os.path.exists(dir.split('/')[0]):
         os.mkdir(dir.split('/')[0])

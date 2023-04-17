@@ -131,7 +131,7 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage=None,L=2,all
                 print(dataset)
                 if linkage == None:
                     # Choose the linkage from CCPC
-                    linkage = linkages[os.path.basename(dataset)]
+                    linkage = linkages[base_file(dataset)]
                 try:
                     if 'page-blocks1vs2345' in  dataset or 'oil_spill' in dataset:
                         # The dataset might meet the error
