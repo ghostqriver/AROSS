@@ -1,9 +1,11 @@
 import pandas as pd
 import os
+from COS_Funcs.utils import *
+
 df = pd.read_csv('CPCC.csv')
 df.columns = ['datasets'] + list(df.columns)[1:]
 bests = df[['datasets','best']].values
-linkages = {os.path.basename(i[0]): i[1] for i in bests}
+linkages = {base_file(i[0]): i[1] for i in bests}
 # linkages = 
 # {'abalone11–17.csv': 'average',
 #  'abalone19.csv': 'average',
