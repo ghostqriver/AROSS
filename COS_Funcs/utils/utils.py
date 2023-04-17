@@ -1,10 +1,12 @@
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 import pandas as pd
+import numpy as np
 import os
 import glob
 import tqdm
 import json
+import sys
 
 def read_data(dataset,norm=True):
     df = pd.read_csv(dataset)
@@ -41,6 +43,18 @@ def split_data(X,y,random_state=None):
 
 
 # Baseline functions
+class Logger(object):
+    def __init__(self, filename="baseline.log", path="./"):
+        self.terminal = sys.stdout
+        self.log = open(os.path.join(path, filename), "a", encoding='utf8', )
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+
+    def flush(self):
+        pass
+
 def make_dir(dir):
     if not os.path.exists(dir.split('/')[0]):
         os.mkdir(dir.split('/')[0])

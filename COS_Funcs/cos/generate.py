@@ -80,8 +80,6 @@ def Gaussian_Generator_(area,radius_new,num,scale,tree=None,y_train=None,min_lab
             else:
                 # Record when filtering
                 filter_cnt += 1 
-                print(filter_cnt)
-                print(new_points)
                 if filter_cnt == 50:
                 # When the sample is filtered many times, the minority area in half safe area might be very small or out of square
                 # Then set the radius to orginal radius

@@ -32,6 +32,7 @@ import numpy as np
 import warnings
 import time
 import math
+import sys
 from tqdm import tqdm
 import copy
 
@@ -53,7 +54,7 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
     make_dir(path)
 
     writers = create_writer(classifiers,metrics,k,oversamplers=oversamplers,datasets=datasets,path=path)
-    
+    sys.stdout = Logger(path=path)
     for random_state in tqdm(range(k)):
         
         for dataset in datasets: 
@@ -104,7 +105,7 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage=None,L=2,all
 
     path = cos_save_path
     make_dir(path)
-
+    sys.stdout = Logger(path=path)
     if isinstance(classifiers,str):
         classifiers = [classifiers]
     if isinstance(metrics,str):
@@ -131,7 +132,11 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage=None,L=2,all
                     # Choose the linkage from CCPC
                     linkage = linkages[dataset]
                 try:
-                    scores,score,alphas = cos_baseline_(dataset,metric,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
+                    if 'page-blocks1vs2345' in  dataset or 'oil_spill' in dataset:
+                        # The dataset might meet the error
+                        scores,score,alphas = None,None,None
+                    else:
+                        scores,score,alphas = cos_baseline_(dataset,metric,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
 
                 except BaseException as e: 
                     print('COS cause an error on',dataset,'with',classifier)
@@ -141,7 +146,7 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage=None,L=2,all
 
                 key_name_ = key_name(dataset,sheet_name_)
                 K_fold_dict[key_name_] = scores
-                K_fold_dict[key_alpha_] = alphas
+                K_fold_dict[key_name_+'alpha'] = alphas
                 df['cos'].loc[dataset] = score
 
             df.index = index

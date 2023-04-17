@@ -4,6 +4,7 @@ from COS_Funcs.cluster import agglomerative
 
 def clustering(X,y,N,c,alpha,linkage='ward',L=2):
     
+    print(linkage)
     num_expected_clusters = N
 
     if 'cure' in linkage:
