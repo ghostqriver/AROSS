@@ -34,8 +34,6 @@ def get_knn(X_train,y_train,metric):
     grid.fit(X_train, y_train)
     return grid.best_estimator_ 
 
-# def get_
-
 def do_classification(X_train,y_train,X_test,classification_model,metric=None):
     
     if metric is None:

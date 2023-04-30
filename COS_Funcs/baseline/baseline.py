@@ -1,6 +1,6 @@
 dataset_path = 'Datasets/'
 
-oversamplers = ['original','smote','db_smote','smote_d','cure_smote','kmeans_smote','adasyn','somo','symprod',
+oversamplers = ['original','random','smote','db_smote','smote_d','cure_smote','kmeans_smote','adasyn','somo','symprod',
                 'smote_enn','smote_tl','nras','g_smote','rwo_sampling','ans','svm_smote',
                 # 'wgan', 'wgan_filter' 
                 # 'cos'
@@ -12,7 +12,8 @@ classifiers = ['knn','svm','decision_tree','random_forest','mlp','naive_bayes']
 metrics = ['recall','f1_score','g_mean','kappa','auc','accuracy','precision']
 
 save_path = 'test/'
-cos_save_path = 'costest/'
+# cos_save_path = 'costest/'
+cos_save_path = 'cos0'
 gan_save_path = 'gantest/'
 random_save_path = 'test/random/'
 
@@ -137,7 +138,7 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage=None,L=2,all
                         # The dataset might meet the error
                         scores,score,alphas = None,None,None
                     else:
-                        scores,score,alphas = cos_baseline_(dataset,metric,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
+                        scores,score,alphas,_,_,_,_,_ = cos_baseline_(dataset,metric,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
 
                 except BaseException as e: 
                     print('COS cause an error on',dataset,'with',classifier)
@@ -162,6 +163,12 @@ def cos_baseline_(dataset,metric,classifier,k=10,linkage='ward',L=2,all_safe_wei
     # For recommend best alpha interval
     alphas = []
     X,y = read_data(dataset)
+    alpha_ls_ls = []
+    score_ls_ls = []
+    safe_ls_ls = []
+    half_ls_ls = []
+    rep_ls_ls = []
+    
     for random_state in range(k):
         X_train,X_test,y_train,y_test = split_data(X,y)
         pos_label = get_labels(y)[0]
@@ -170,17 +177,25 @@ def cos_baseline_(dataset,metric,classifier,k=10,linkage='ward',L=2,all_safe_wei
         N = optimize.choose_N(X_train, y_train, linkage=linkage, L=L)
         
         # Choose alpha
-        best_alpha,best_score = optimize.choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
+        # best_alpha,best_score = optimize.choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
+        best_alpha,best_score,alpha_ls,score_ls,safe_ls,half_ls,rep_ls = optimize.choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
         if show_folds:      
             print(random_state+1,'|',dataset,'|',classifier,'|',metric,':',end=' ')
             print(best_score)
         scores.append(best_score)
         alphas.append(best_alpha)
+        
+        alpha_ls_ls.append(alpha_ls)
+        score_ls_ls.append(score_ls)
+        safe_ls_ls.append(safe_ls)
+        half_ls_ls.append(half_ls)
+        rep_ls_ls.append(rep_ls)
+        
     avg = np.mean(scores)
     if show_folds:      
         print(dataset,'|',classifier,'|',metric,':',end=' ')
         print(avg)
-    return scores,avg,alphas
+    return scores,avg,alphas,alpha_ls_ls,np.array(score_ls_ls),np.array(safe_ls_ls),np.array(half_ls_ls),np.array(rep_ls_ls)
 
 
 # Class

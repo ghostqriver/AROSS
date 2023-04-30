@@ -2,14 +2,13 @@
 # min_label = 1
 # maj_label = 0
 
-
 from sklearn.datasets import load_svmlight_file
+from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 import os
 import glob
 from COS_Funcs.utils import *
-
 
 def dataset_description(dataset_path,save=True):
     path = dataset_path
@@ -63,3 +62,37 @@ def dataset_transform(file_path,format='svmlight'):
     df.to_csv(save_path,index=False)
     print('Dataset saved in',save_path) 
     return dataset_description(save_path)
+
+def split_datasets(path='Datasets/',k=10):
+    '''
+    @brief split and standardize dataset saved as csv in the given path into k folds
+    '''
+    datasets = glob.glob(os.path.join(path,'*.csv'))
+    for dataset in datasets:
+        dir_name = dataset.split('.')[0]
+#         print(dir_name)
+        make_dir(dir_name)
+
+        # read original file in
+        X,y = read_data(dataset,norm=False)
+        for i in range(k):
+
+            # Split data randomly
+            X_train,X_test,y_train,y_test = split_data(X,y)
+
+            # Standardize
+            ss = StandardScaler()
+            X_train = ss.fit_transform(X_train)
+            X_test = ss.transform(X_test)
+
+            fold_dir_name = os.path.join(dir_name,str(i))
+#             print(fold_dir_name)
+            make_dir(fold_dir_name)
+
+            # Save training and test set
+            df_train = pd.DataFrame(X_train)
+            df_train['label'] = y_train
+            df_train.to_csv(os.path.join(fold_dir_name,'train.csv'),index=None)
+            df_test = pd.DataFrame(X_test)
+            df_test['label'] = y_test
+            df_test.to_csv(os.path.join(fold_dir_name,'test.csv'),index=None)

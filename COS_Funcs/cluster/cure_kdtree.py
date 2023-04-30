@@ -332,7 +332,7 @@ class Cure():
 
                 for item in self.queue:
                     distance = merged_cluster.clus_dist(item,linkage=self.linkage,L=self.L,cov_i=self.cov_i)
-                    # Check if distance between new cluster and current is the best than now.
+                    # Check if distance between new cluster and current is the best.
                     if distance < merged_cluster.distance:
                         merged_cluster.closest = item
                         merged_cluster.distance = distance

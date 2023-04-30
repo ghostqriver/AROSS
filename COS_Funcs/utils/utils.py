@@ -16,8 +16,19 @@ def read_data(dataset,norm=True):
     if norm:
         # Data preprocessing
         X = standard(X)
-    
     return X,y
+
+def read_fold(dataset,k):
+    '''
+    @brief Read splitted and standardized dataset 
+    @return X_train,X_test,y_train,y_test
+    '''
+    path = dataset.split('.')[0]
+    path = os.path.join(path,str(k))
+    print(path)
+    X_train,y_train = read_data(os.path.join(path,'train.csv'),norm=False)
+    X_test,y_test = read_data(os.path.join(path,'test.csv'),norm=False)
+    return X_train,X_test,y_train,y_test
 
 def standard(X):
     ss = StandardScaler()
