@@ -7,7 +7,7 @@ oversamplers = ['original','random','smote','db_smote','smote_d','cure_smote','k
                 # 'random'
                 ] 
 
-classifiers = ['knn','svm','decision_tree','random_forest','mlp','naive_bayes'] 
+classifiers = ['knn','svm','decision_tree','random_forest','naive_bayes'] 
 
 metrics = ['recall','f1_score','g_mean','kappa','auc','accuracy','precision']
 
@@ -15,7 +15,7 @@ save_path = 'test/'
 # cos_save_path = 'costest/'
 cos_save_path = 'cos0'
 gan_save_path = 'gantest/'
-random_save_path = 'test/random/'
+
 
 import os
 import glob
@@ -45,8 +45,6 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
     
     if 'cos' in oversamplers:
         path = cos_save_path
-    elif 'random' in oversamplers:
-        path = random_save_path
     elif 'wgan' in oversamplers:
         path = gan_save_path
     else:
@@ -60,15 +58,16 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
         
         for dataset in datasets: 
             
-            X,y = read_data(dataset)
-#             print(dataset)
+            # X,y = read_data(dataset)
+            print(dataset)
 
             for oversampler in oversamplers:
                 print(oversampler,end='|')
 
-                X_train,X_test,y_train,y_test = split_data(X,y,random_state=random_state)
+                # X_train,X_test,y_train,y_test = split_data(X,y,random_state=random_state)
+                X_train,X_test,y_train,y_test = read_fold(dataset,random_state)
 
-                pos_label = get_labels(y)[0]
+                pos_label = get_labels(y_train)[0]
                 
                 # try:
                 start = time.time()
@@ -92,7 +91,7 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
                         if show_folds:
                             print(random_state+1,'|',dataset,'|',oversampler,'|',classifier,'|',metric,':',end='')
                             print(score)
-
+                            sys.stdout.flush()
                         writers[classifier][metric]['scores_df'][random_state][oversampler].loc[dataset] = score
                     
                 # except BaseException as e: 
@@ -162,7 +161,7 @@ def cos_baseline_(dataset,metric,classifier,k=10,linkage='ward',L=2,all_safe_wei
     scores = []
     # For recommend best alpha interval
     alphas = []
-    X,y = read_data(dataset)
+    # X,y = read_data(dataset)
     alpha_ls_ls = []
     score_ls_ls = []
     safe_ls_ls = []
@@ -170,8 +169,9 @@ def cos_baseline_(dataset,metric,classifier,k=10,linkage='ward',L=2,all_safe_wei
     rep_ls_ls = []
     
     for random_state in range(k):
-        X_train,X_test,y_train,y_test = split_data(X,y)
-        pos_label = get_labels(y)[0]
+        # X_train,X_test,y_train,y_test = split_data(X,y)
+        X_train,X_test,y_train,y_test = read_fold(dataset,random_state)
+        pos_label = get_labels(y_train)[0]
 
         # Choose N
         N = optimize.choose_N(X_train, y_train, linkage=linkage, L=L)

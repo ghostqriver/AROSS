@@ -33,6 +33,9 @@ def calc_score(metric,y_test,y_pred,pos_label):
     elif metric == 'precision':
         return metrics.precision_score(y_test,y_pred,pos_label=pos_label)
     
+    elif metric == 'TP':
+        return confusion_matrix(y_test,y_pred,pos_label=pos_label)[0]
+    
     else:
         return metrics.recall_score(y_test,y_pred,pos_label=pos_label)
     

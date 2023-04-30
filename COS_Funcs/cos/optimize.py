@@ -38,7 +38,7 @@ def choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage,L=2,a
     safe_ls = []
     half_ls = []
     rep_ls = []
-    for alpha in [0]:#,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]:
+    for alpha in [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]:
         X_gen,y_gen,min_all_safe_area,min_half_safe_area,reps = COS(X_train,y_train,N,0,alpha,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
         # HERE
         y_pred = do_classification(X_gen,y_gen,X_test,classifier)#,metric)

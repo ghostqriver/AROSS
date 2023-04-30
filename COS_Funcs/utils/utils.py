@@ -25,7 +25,7 @@ def read_fold(dataset,k):
     '''
     path = dataset.split('.')[0]
     path = os.path.join(path,str(k))
-    print(path)
+    # print(path)
     X_train,y_train = read_data(os.path.join(path,'train.csv'),norm=False)
     X_test,y_test = read_data(os.path.join(path,'test.csv'),norm=False)
     return X_train,X_test,y_train,y_test
