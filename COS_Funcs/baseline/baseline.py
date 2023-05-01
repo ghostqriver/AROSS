@@ -9,11 +9,11 @@ oversamplers = ['original','random','smote','db_smote','smote_d','cure_smote','k
 
 classifiers = ['knn','svm','decision_tree','random_forest','naive_bayes'] 
 
-metrics = ['recall','f1_score','g_mean','kappa','auc','accuracy','precision']
+metrics = ['recall','f1_score','g_mean','kappa','auc']
 
 save_path = 'test/'
 cos_save_path = 'costest/'
-cos_save_path = 'cos0/'
+# cos_save_path = 'cos0/'
 gan_save_path = 'gantest/'
 
 
