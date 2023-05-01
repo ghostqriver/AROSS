@@ -14,26 +14,44 @@ from COS_Funcs.utils import get_labels
 from COS_Funcs.cos.nearest_neighbor import nn_kd,create_kd
 # from imblearn.under_sampling import TomekLinks
 
+def collect_min_neighbors(areas,minlabel):
+    '''
+    @brief collect number of minority instances be contained in the safe area
+    '''
+    min_set = set()
+    for area in areas:
+        # min_neighbors = area.nearest_neighbor_index[area.nearest_neighbor_index]
+        min_set.update(area.nearest_neighbor_index[area.nearest_neighbor_label==minlabel])        
+    return len(min_set)
+
+
 def COS(X,y,N,c,alpha,linkage,L=2,all_safe_weight=1,all_safe_gen=G.Gaussian_Generator,half_safe_gen=G.Gaussian_Generator,Gaussian_scale=None,IR=1,visualize=False):
     
     minlabel,majlabel = get_labels(y)
     clusters,all_reps,_,labels = clustering(X,y,N,c,alpha,linkage,L)
     tree = create_kd(X)
     areas,min_all_safe_area,min_half_safe_area = safe_areas(X,tree,all_reps,y,minlabel=minlabel,majlabel=majlabel) 
+    
+    min_neighbors = sum(y==minlabel)
+    safe_min_neighbors = collect_min_neighbors(min_all_safe_area,minlabel)
+    all_min_neighbors = collect_min_neighbors(min_all_safe_area+min_half_safe_area,minlabel)
+    
+    safe_min_neighbors = safe_min_neighbors/min_neighbors
+    all_min_neighbors = all_min_neighbors/min_neighbors
+    
     if visualize == True:
         print('Clusters:')
         V.show_clusters_(X,labels,y,all_reps)
         print('Safe areas:')
         V.show_areas(X,y,min_all_safe_area,min_half_safe_area)
     X_generated,y_generated = oversampling(X,tree,y,min_all_safe_area,min_half_safe_area,all_safe_gen=all_safe_gen,half_safe_gen=half_safe_gen,Gaussian_scale=Gaussian_scale,minlabel=minlabel,majlabel=majlabel,all_safe_weight=all_safe_weight,IR=IR,show=visualize)
-    over_size = len(X_generated)
     if visualize == True:
         print('Generated dataset:') 
         V.show_oversampling(X,y,X_generated,y_generated)
         plt.show()
         print('All:')
         V.show_cos(X,y,X_generated,y_generated,min_all_safe_area,min_half_safe_area,minlabel,majlabel)
-    return X_generated,y_generated,len(min_all_safe_area),len(min_half_safe_area),len(all_reps)
+    return X_generated,y_generated,safe_min_neighbors,all_min_neighbors
     
 def safe_areas(X,tree,all_reps,y,k=3,minlabel=None,majlabel=None):
     '''

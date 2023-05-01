@@ -52,7 +52,14 @@ def split_data(X,y,random_state=None):
     '''
     return train_test_split(X,y,stratify=y,random_state=random_state,)#)test_size=0.33)
 
-
+def to_excel(file_name,dfs,sheet_names):    
+    writer = pd.ExcelWriter(file_name)
+    if len(dfs) != len(sheet_names):
+        raise "sheet name should correspond to the number of dataframes!"
+    for df,sheet_name in zip(dfs,sheet_names):
+        df.to_excel(writer,sheet_name=sheet_name)
+    writer.save()
+    
 # Baseline functions
 class Logger(object):
     def __init__(self, filename="baseline.log", path="./"):

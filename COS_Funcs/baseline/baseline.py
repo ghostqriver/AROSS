@@ -162,12 +162,9 @@ def cos_baseline_(dataset,metric,classifier,k=10,linkage='ward',L=2,all_safe_wei
     # For recommend best alpha interval
     alphas = []
     # X,y = read_data(dataset)
-    alpha_ls_ls = []
     score_ls_ls = []
-    safe_ls_ls = []
-    half_ls_ls = []
-    rep_ls_ls = []
-    
+    safe_min_neighbor_ls_ls = []
+    all_min_neighbor_ls_ls = []
     for random_state in range(k):
         # X_train,X_test,y_train,y_test = split_data(X,y)
         X_train,X_test,y_train,y_test = read_fold(dataset,random_state)
@@ -178,24 +175,21 @@ def cos_baseline_(dataset,metric,classifier,k=10,linkage='ward',L=2,all_safe_wei
         
         # Choose alpha
         # best_alpha,best_score = optimize.choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
-        best_alpha,best_score,alpha_ls,score_ls,safe_ls,half_ls,rep_ls = optimize.choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
+        best_alpha,best_score,score_ls,safe_min_neighbor_ls,all_min_neighbor_ls = optimize.choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
         if show_folds:      
             print(random_state+1,'|',dataset,'|',classifier,'|',metric,':',end=' ')
             print(best_score)
         scores.append(best_score)
         alphas.append(best_alpha)
         
-        alpha_ls_ls.append(alpha_ls)
         score_ls_ls.append(score_ls)
-        safe_ls_ls.append(safe_ls)
-        half_ls_ls.append(half_ls)
-        rep_ls_ls.append(rep_ls)
-        
+        safe_min_neighbor_ls_ls.append(safe_min_neighbor_ls)
+        all_min_neighbor_ls_ls.append(all_min_neighbor_ls)
     avg = np.mean(scores)
     if show_folds:      
         print(dataset,'|',classifier,'|',metric,':',end=' ')
         print(avg)
-    return scores,avg,alphas,alpha_ls_ls,np.array(score_ls_ls),np.array(safe_ls_ls),np.array(half_ls_ls),np.array(rep_ls_ls)
+    return scores,avg,alphas,np.array(score_ls_ls),np.array(safe_min_neighbor_ls_ls),np.array(all_min_neighbor_ls_ls)
 
 
 # Class
