@@ -25,8 +25,8 @@ def collect_min_neighbors(areas,minlabel):
     return len(min_set)
 
 
-def COS(X,y,N,c,alpha,linkage,L=2,all_safe_weight=1,all_safe_gen=G.Gaussian_Generator,half_safe_gen=G.Gaussian_Generator,Gaussian_scale=None,IR=1,visualize=False):
-    
+def COS(X,y,N,c=0,alpha=0,linkage='ward',L=2,all_safe_weight=1,all_safe_gen=G.Gaussian_Generator,half_safe_gen=G.Gaussian_Generator,Gaussian_scale=None,IR=1,visualize=False):
+     
     minlabel,majlabel = get_labels(y)
     clusters,all_reps,_,labels = clustering(X,y,N,c,alpha,linkage,L)
     tree = create_kd(X)

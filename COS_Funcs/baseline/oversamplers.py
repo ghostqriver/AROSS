@@ -1,10 +1,11 @@
 from imblearn.over_sampling import SMOTE,SVMSMOTE,ADASYN,RandomOverSampler
 from imblearn.combine import SMOTETomek,SMOTEENN
 from smote_variants import (DBSMOTE,DSMOTE,SMOTE_D,CURE_SMOTE,kmeans_SMOTE,SOMO,NRAS,SYMPROD,G_SMOTE,RWO_sampling,ANS)
+from COS_Funcs.cos.cos import COS
 # Comment this after completing GAN baseline
 # from COS_Funcs.baseline.GANs.oversampler import WGAN,WGAN_filter
 
-def do_oversampling(model,X_train,y_train,**args): 
+def do_oversampling(model,X_train,y_train,**cos_para): 
     
     if model == 'original':
         return X_train,y_train
@@ -87,7 +88,8 @@ def do_oversampling(model,X_train,y_train,**args):
     #     return WGAN_filter(X_train,y_train,X_test,y_test,classifier)
     
     elif model == 'cos':
-        N,c,alpha,linkage,L,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize = get_cos_para(args[0])
-        return cos.COS(X_train,y_train,N,c,alpha,linkage,L,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize)
+        # N,c,alpha,linkage,L,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize = get_cos_para(args[0])
+        return COS(X_train,y_train,N=cos_para['N'],linkage=cos_para['linkage'])[:2]
+
     else:
         return 0

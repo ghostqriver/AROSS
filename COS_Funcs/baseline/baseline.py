@@ -12,8 +12,8 @@ classifiers = ['knn','svm','decision_tree','random_forest','naive_bayes']
 metrics = ['recall','f1_score','g_mean','kappa','auc','accuracy','precision']
 
 save_path = 'test/'
-# cos_save_path = 'costest/'
-cos_save_path = 'cos0'
+cos_save_path = 'costest/'
+cos_save_path = 'cos0/'
 gan_save_path = 'gantest/'
 
 
@@ -51,7 +51,13 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
         path = save_path
         
     make_dir(path)
-
+    if isinstance(classifiers,str):
+        classifiers = [classifiers]
+    if isinstance(metrics,str):
+        metrics = [metrics]
+    if isinstance(oversamplers,str):
+        oversamplers = [oversamplers]
+        
     writers = create_writer(classifiers,metrics,k,oversamplers=oversamplers,datasets=datasets,path=path)
     sys.stdout = Logger(path=path)
     for random_state in tqdm(range(k)):
@@ -69,34 +75,39 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
 
                 pos_label = get_labels(y_train)[0]
                 
-                # try:
-                start = time.time()
-                if oversampler == 'cos':
-                    X_train,y_train,num_all_safe,num_half_safe = do_oversampling(oversampler,X_train,y_train,args) 
+                try:
+                    start = time.time()
+                    if oversampler == 'cos':
+                        linkage = linkages[base_file(dataset)]
+                        N = optimize.choose_N(X_train,y_train,linkage)
+                        X_train,y_train = do_oversampling(oversampler,X_train,y_train,linkage=linkage,N=N) 
 
-                elif oversampler == 'wgan' or oversampler == 'wgan_filter':
-                    X_train,y_train = do_oversampling(oversampler,X_train,y_train,X_test=X_test,y_test=y_test,classifier=classifiers[0]) 
+                    elif oversampler == 'wgan' or oversampler == 'wgan_filter':
+                        X_train,y_train = do_oversampling(oversampler,X_train,y_train,X_test=X_test,y_test=y_test,classifier=classifiers[0]) 
+                        
+                    else:
+                        X_train,y_train = do_oversampling(oversampler,X_train,y_train) 
                     
+                    end = time.time()
+                    
+                    print('cost:',end-start)
+                    
+                except BaseException as e: 
+                    print(oversampler,'cause an error on',dataset)
+                    continue
+                
                 else:
-                    X_train,y_train = do_oversampling(oversampler,X_train,y_train) 
+                    for classifier in classifiers:     
+                        y_pred = do_classification(X_train,y_train,X_test,classifier)
+                        for metric in metrics:
+                            score = calc_score(metric,y_test,y_pred,pos_label)
+                            if show_folds:
+                                print(random_state+1,'|',dataset,'|',oversampler,'|',classifier,'|',metric,':',end='')
+                                print(score)
+                                sys.stdout.flush()
+                            writers[classifier][metric]['scores_df'][random_state][oversampler].loc[dataset] = score
                     
-                end = time.time()
                 
-                print('cost:',end-start)
-                
-                for classifier in classifiers:     
-                    y_pred = do_classification(X_train,y_train,X_test,classifier)
-                    for metric in metrics:
-                        score = calc_score(metric,y_test,y_pred,pos_label)
-                        if show_folds:
-                            print(random_state+1,'|',dataset,'|',oversampler,'|',classifier,'|',metric,':',end='')
-                            print(score)
-                            sys.stdout.flush()
-                        writers[classifier][metric]['scores_df'][random_state][oversampler].loc[dataset] = score
-                    
-                # except BaseException as e: 
-                #     print(oversampler,'cause an error on',dataset)
-                #     continue
                 
     write_writer(writers,classifiers,metrics,k,oversamplers,datasets)
     return writers
@@ -201,7 +212,9 @@ def create_writer(classifiers,metrics,k,oversamplers,datasets,path):
             writers[classifier][metric] = dict()
             if 'cos' not in oversamplers:
                 file_name = base_name(metric,classifier,k)
-            file_name = os.path.join(path+file_name)
+            else:
+                file_name = 'cos_'+base_name(metric,classifier,k)
+            file_name = os.path.join(path,file_name)
             writers[classifier][metric]['file_name'] = file_name
             writers[classifier][metric]['writer'] =  pd.ExcelWriter(file_name)
             writers[classifier][metric]['scores_df'] = []

@@ -37,7 +37,7 @@ def calc_score(metric,y_test,y_pred,pos_label):
         return confusion_matrix(y_test,y_pred,pos_label=pos_label)[0]
     
     elif metric == 'TPR':
-        TP,FP,FN,TN = confusion_matrix(y_test,y_pred,pos_label=pos_label)[0]
+        TP,FP,FN,TN = confusion_matrix(y_test,y_pred,pos_label=pos_label)
         return TP/(TP+FN)
     else:
         return metrics.recall_score(y_test,y_pred,pos_label=pos_label)
