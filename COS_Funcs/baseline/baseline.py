@@ -7,7 +7,7 @@ oversamplers = ['original','random','smote','db_smote','smote_d','cure_smote','k
                 # 'random'
                 ] 
 
-classifiers = ['knn','svm','decision_tree','random_forest','naive_bayes'] 
+classifiers = ['knn','svm','decision_tree','random_forest'] 
 
 metrics = ['recall','f1_score','g_mean','kappa','auc']
 
@@ -121,7 +121,9 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage=None,L=2,all
         classifiers = [classifiers]
     if isinstance(metrics,str):
         metrics = [metrics]
-
+    if isinstance(datasets,str):
+        datasets = [datasets]
+        
     K_fold_dict = {}
 
     file_name = os.path.join(path,cos_file_name(classifiers,metrics))
@@ -133,42 +135,36 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage=None,L=2,all
     
     for classifier in classifiers:     
 
-        for metric in metrics:
+        df = pd.DataFrame(index=datasets,columns=metrics)
+        
+        for dataset in datasets: 
+            print(dataset)
+            if linkage == None:
+                # Choose the linkage from CCPC
+                linkage = linkages[base_file(dataset)]
+            try:
+                scores,score,alphas,_,_,_ = cos_baseline_(dataset,metrics,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
 
-            df = pd.DataFrame(columns=['cos'],index=datasets)
-            sheet_name_ = sheet_name(metric,classifier,k)
+            except BaseException as e: 
+                print('COS cause an error on',dataset,'with',classifier)
+                scores = []
+                score = None
+                continue 
             
-            for dataset in datasets: 
-                print(dataset)
-                if linkage == None:
-                    # Choose the linkage from CCPC
-                    linkage = linkages[base_file(dataset)]
-                try:
-                    if 'page-blocks1vs2345' in  dataset or 'oil_spill' in dataset:
-                        # The dataset might meet the error
-                        scores,score,alphas = None,None,None
-                    else:
-                        scores,score,alphas,_,_,_,_,_ = cos_baseline_(dataset,metric,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
+            K_fold_dict[dataset] = scores
+            K_fold_dict[dataset + '_alpha'] = alphas
+            for key in score:
+                df[key].loc[dataset] = score[key]
 
-                except BaseException as e: 
-                    print('COS cause an error on',dataset,'with',classifier)
-                    scores = []
-                    score = None
-                    continue 
-
-                key_name_ = key_name(dataset,sheet_name_)
-                K_fold_dict[key_name_] = scores
-                K_fold_dict[key_name_+'alpha'] = alphas
-                df['cos'].loc[dataset] = score
-
-            df.index = index
-            df.to_excel(writer,sheet_name= sheet_name_)
+        df.index = index
+        df.to_excel(writer,sheet_name=classifier)
 
     writer.save()
     save_json(K_fold_dict,dict_file_name)
     print("File saved in",file_name,'and',dict_file_name)
     
-def cos_baseline_(dataset,metric,classifier,k=10,linkage='ward',L=2,all_safe_weight=1,IR=1,show_folds=True):
+def cos_baseline_(dataset,metrics,classifier,k=10,linkage='ward',L=2,all_safe_weight=1,IR=1,show_folds=True):
+    
     scores = []
     # For recommend best alpha interval
     alphas = []
@@ -186,20 +182,32 @@ def cos_baseline_(dataset,metric,classifier,k=10,linkage='ward',L=2,all_safe_wei
         
         # Choose alpha
         # best_alpha,best_score = optimize.choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
-        best_alpha,best_score,score_ls,safe_min_neighbor_ls,all_min_neighbor_ls = optimize.choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
-        if show_folds:      
-            print(random_state+1,'|',dataset,'|',classifier,'|',metric,':',end=' ')
-            print(best_score)
+        best_alpha,best_score,score_ls,safe_min_neighbor_ls,all_min_neighbor_ls = optimize.choose_alpha(X_train,y_train,X_test,y_test,classifier,metrics,N,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
+        
+        # if show_folds:      
+        #     for metric in metrics:
+        #         print(random_state+1,'|',dataset,'|',classifier,'|',metric,':',end=' ')
+        #         print(best_score[metric])
+                
         scores.append(best_score)
         alphas.append(best_alpha)
         
         score_ls_ls.append(score_ls)
         safe_min_neighbor_ls_ls.append(safe_min_neighbor_ls)
         all_min_neighbor_ls_ls.append(all_min_neighbor_ls)
-    avg = np.mean(scores)
-    if show_folds:      
-        print(dataset,'|',classifier,'|',metric,':',end=' ')
-        print(avg)
+    
+    #  Calculate average of folds
+    avg = {}
+    for metric in metrics:
+        avg[metric] = [score[metric] for score in scores]
+        avg[metric] = sum(avg[metric])/k
+        
+    
+    if show_folds:
+        for metric in metrics:      
+            print(dataset,'|',classifier,'|',metric,':',end=' ')
+            print(avg[metric])
+            
     return scores,avg,alphas,np.array(score_ls_ls),np.array(safe_min_neighbor_ls_ls),np.array(all_min_neighbor_ls_ls)
 
 

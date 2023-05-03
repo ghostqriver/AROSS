@@ -27,27 +27,35 @@ def choose_para(X_train,y_train,X_test,y_test,classifier,metric,N,linkage,L=2):
     alpha,_ = choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage,L)
     return N,alpha,0
 
-def choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage,L=2,all_safe_weight=1,IR=1):
-    # print('Choosing alpha')
+def choose_alpha(X_train,y_train,X_test,y_test,classifier,metrics,N,linkage,L=2,all_safe_weight=1,IR=1):
+
+    # Pick the best alpha based on 'recall'
+    det_metric = 'recall'
+    if det_metric not in metrics:
+        metrics.append(det_metric)
+        
     pos_label = get_labels(y_train)[0]
-    best_score = 0 - np.inf
+    best_score = {}
+    best_score[det_metric] = 0 - np.inf
     best_alpha = 0
     
     score_ls = []
     safe_min_neighbor_ls = []
     all_min_neighbor_ls = []
-
+        
     for alpha in [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]:
         X_gen,y_gen,safe_min_neighbors,all_min_neighbors = COS(X_train,y_train,N,0,alpha,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
-        # HERE
         y_pred = do_classification(X_gen,y_gen,X_test,classifier)#,metric)
-        score = calc_score(metric,y_test,y_pred,pos_label)
-        # print('alpha:',alpha,'|score:',score)
+        
+        score = {}
+        for metric in metrics:
+            score[metric] = calc_score(metric,y_test,y_pred,pos_label)
         
         score_ls.append(score)
         safe_min_neighbor_ls.append(safe_min_neighbors)
         all_min_neighbor_ls.append(all_min_neighbors)
-        if score > best_score:
+        # print('alpha:',alpha,'| score:',score)
+        if score[det_metric] > best_score[det_metric]:
             best_score = score
             best_alpha = alpha
         
