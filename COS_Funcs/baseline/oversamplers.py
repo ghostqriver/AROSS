@@ -15,30 +15,30 @@ def do_oversampling(model,X_train,y_train,**cos_para):
         return random.fit_resample(X_train,y_train)
     
     elif model == 'smote':
-        # smote = SMOTE(k_neighbors=3)
-        smote = SMOTE()
+        smote = SMOTE(k_neighbors=3)
+        # smote = SMOTE()
         return smote.fit_resample(X_train,y_train)
     
     elif model == 'svm_smote':
-        # svmsmote = SVMSMOTE(k_neighbors=3)
-        svmsmote = SVMSMOTE()
+        svmsmote = SVMSMOTE(k_neighbors=3)
+        # svmsmote = SVMSMOTE()
         return svmsmote.fit_resample(X_train,y_train)
         
     elif model == 'smote_enn':
-        # smote = SMOTE(k_neighbors=3)
-        # smoteenn = SMOTEENN(smote=smote)
-        smoteenn = SMOTEENN()
+        smote = SMOTE(k_neighbors=3)
+        smoteenn = SMOTEENN(smote=smote)
+        # smoteenn = SMOTEENN()
         return smoteenn.fit_resample(X_train,y_train)
     
     elif model == 'smote_tl':
-        # smote = SMOTE(k_neighbors=3)
-        # smotetl = SMOTETomek(smote=smote)
-        smotetl = SMOTETomek()
+        smote = SMOTE(k_neighbors=3)
+        smotetl = SMOTETomek(smote=smote)
+        # smotetl = SMOTETomek()
         return smotetl.fit_resample(X_train,y_train)
     
     elif model == 'adasyn':
-        # adasyn = ADASYN(n_neighbors=3)
-        adasyn = ADASYN()
+        adasyn = ADASYN(n_neighbors=1,)
+        # adasyn = ADASYN()
         return adasyn.fit_resample(X_train,y_train)
     
     elif model == 'db_smote':

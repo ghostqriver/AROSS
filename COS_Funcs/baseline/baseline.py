@@ -143,8 +143,11 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=5,linkage=None,L=2,all_
             if linkage == None:
                 # Choose the linkage from CCPC
                 linkage = linkages[base_file(dataset)]
+            if 'yeast-1-2-8-9_vs_7' in dataset:
+                # I will run this latter
+                scores,score,alphas = [],None,[]
             # try:
-            scores,score,alphas,_,_,_ = cos_baseline_(dataset,metrics,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
+            scores,score,alphas,folds_scores,_,_ = cos_baseline_(dataset,metrics,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
 
             # except BaseException as e: 
                 # print('COS cause an error on',dataset,'with',classifier)
@@ -152,8 +155,9 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=5,linkage=None,L=2,all_
                 # score = None
                 # continue 
             
-            K_fold_dict[dataset] = scores
-            K_fold_dict[dataset + '_alpha'] = alphas
+            K_fold_dict[dataset+'_best_scores'] = scores
+            K_fold_dict[dataset + '_best_alphas'] = alphas
+            K_fold_dict[dataset + '_folds_scores'] = folds_scores
             for key in score:
                 df[key].loc[dataset] = score[key]
 
