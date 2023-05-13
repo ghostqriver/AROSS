@@ -1,7 +1,8 @@
 dataset_path = 'Datasets/'
 
-oversamplers = ['original','random','smote','db_smote','smote_d','cure_smote','kmeans_smote','adasyn','somo','symprod',
-                'smote_enn','smote_tl','nras','g_smote','rwo_sampling','ans','svm_smote',
+oversamplers = ['original','random','smote','adasyn','smote_d','symprod','smote_enn','smote_tl',
+                'nras','g_smote','rwo_sampling','ans','svm_smote','db_smote','cure_smote',
+                'kmeans_smote','somo'
                 # 'wgan', 'wgan_filter' 
                 # 'cos'
                 # 'random'
@@ -11,10 +12,10 @@ classifiers = ['knn','svm','decision_tree','random_forest']
 
 metrics = ['recall','f1_score','g_mean','kappa','auc']
 
-save_path = 'test/'
-cos_save_path = 'costest/'
-# cos_save_path = 'cos0/'
-gan_save_path = 'gantest/'
+save_path = 'test_5_folds'
+cos_save_path = 'costest_5_folds'
+# cos_save_path = 'cos0'
+gan_save_path = 'gantest'
 
 
 import os
@@ -37,7 +38,7 @@ import sys
 from tqdm import tqdm
 import copy
 
-def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversamplers,datasets=datasets,show_folds=True,**args):
+def baseline(classifiers=classifiers,metrics=metrics,k=5,oversamplers=oversamplers,datasets=datasets,show_folds=True,**args):
     #pd.set_option('precision',5)  
     #pd.set_option('display.width', 100)
     #pd.set_option('expand_frame_repr', False)
@@ -87,7 +88,7 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
                         
                     else:
                         X_train,y_train = do_oversampling(oversampler,X_train,y_train) 
-                    
+                
                     end = time.time()
                     
                     print('cost:',end-start)
@@ -112,7 +113,7 @@ def baseline(classifiers=classifiers,metrics=metrics,k=10,oversamplers=oversampl
     write_writer(writers,classifiers,metrics,k,oversamplers,datasets)
     return writers
 
-def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage=None,L=2,all_safe_weight=1,IR=1,show_folds=True):
+def cos_baseline(classifiers,metrics,datasets=datasets,k=5,linkage=None,L=2,all_safe_weight=1,IR=1,show_folds=True):
 
     path = cos_save_path
     make_dir(path)
@@ -142,14 +143,14 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage=None,L=2,all
             if linkage == None:
                 # Choose the linkage from CCPC
                 linkage = linkages[base_file(dataset)]
-            try:
-                scores,score,alphas,_,_,_ = cos_baseline_(dataset,metrics,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
+            # try:
+            scores,score,alphas,_,_,_ = cos_baseline_(dataset,metrics,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
 
-            except BaseException as e: 
-                print('COS cause an error on',dataset,'with',classifier)
-                scores = []
-                score = None
-                continue 
+            # except BaseException as e: 
+                # print('COS cause an error on',dataset,'with',classifier)
+                # scores = []
+                # score = None
+                # continue 
             
             K_fold_dict[dataset] = scores
             K_fold_dict[dataset + '_alpha'] = alphas
@@ -163,7 +164,7 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=10,linkage=None,L=2,all
     save_json(K_fold_dict,dict_file_name)
     print("File saved in",file_name,'and',dict_file_name)
     
-def cos_baseline_(dataset,metrics,classifier,k=10,linkage='ward',L=2,all_safe_weight=1,IR=1,show_folds=True):
+def cos_baseline_(dataset,metrics,classifier,k=5,linkage='ward',L=2,all_safe_weight=1,IR=1,show_folds=True):
     
     scores = []
     # For recommend best alpha interval
@@ -178,16 +179,17 @@ def cos_baseline_(dataset,metrics,classifier,k=10,linkage='ward',L=2,all_safe_we
         pos_label = get_labels(y_train)[0]
 
         # Choose N
-        N = optimize.choose_N(X_train, y_train, linkage=linkage, L=L)
         
+        N = optimize.choose_N(X_train, y_train, linkage=linkage, L=L)
+        # print(N)
         # Choose alpha
         # best_alpha,best_score = optimize.choose_alpha(X_train,y_train,X_test,y_test,classifier,metric,N,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
         best_alpha,best_score,score_ls,safe_min_neighbor_ls,all_min_neighbor_ls = optimize.choose_alpha(X_train,y_train,X_test,y_test,classifier,metrics,N,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
         
-        # if show_folds:      
-        #     for metric in metrics:
-        #         print(random_state+1,'|',dataset,'|',classifier,'|',metric,':',end=' ')
-        #         print(best_score[metric])
+        if show_folds:      
+            for metric in metrics:
+                print(random_state+1,'|',dataset,'|',classifier,'|',metric,':',end=' ')
+                print(best_score[metric])
                 
         scores.append(best_score)
         alphas.append(best_alpha)

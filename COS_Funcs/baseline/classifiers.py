@@ -44,10 +44,10 @@ def do_classification(X_train,y_train,X_test,classification_model,metric=None):
             model = SVC()
             
         elif classification_model == 'decision_tree':
-            model = DecisionTreeClassifier()
+            model = DecisionTreeClassifier(random_state=23,)
         
         elif classification_model == 'random_forest':
-            model = RandomForestClassifier()
+            model = RandomForestClassifier(random_state=23,)
         
         elif classification_model == 'mlp':
             model = MLPClassifier()

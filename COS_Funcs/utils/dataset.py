@@ -4,6 +4,7 @@
 
 from sklearn.datasets import load_svmlight_file
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import StratifiedKFold
 import pandas as pd
 import numpy as np
 import os
@@ -63,22 +64,26 @@ def dataset_transform(file_path,format='svmlight'):
     print('Dataset saved in',save_path) 
     return dataset_description(save_path)
 
-def split_datasets(path='Datasets/',k=10):
+def split_datasets(path='Datasets/',k=5):
     '''
     @brief split and standardize dataset saved as csv in the given path into k folds
     '''
     datasets = glob.glob(os.path.join(path,'*.csv'))
     for dataset in datasets:
         dir_name = dataset.split('.')[0]
-#         print(dir_name)
+    #         print(dir_name)
         make_dir(dir_name)
 
         # read original file in
         X,y = read_data(dataset,norm=False)
-        for i in range(k):
 
-            # Split data randomly
-            X_train,X_test,y_train,y_test = split_data(X,y)
+        # Split data by 10 folds
+        skf = StratifiedKFold(n_splits=k)
+        for i, (train_index, test_index) in enumerate(skf.split(X, y)):
+            X_train = X[train_index]
+            y_train = y[train_index]
+            X_test = X[test_index]
+            y_test = y[test_index]
 
             # Standardize
             ss = StandardScaler()
@@ -86,7 +91,7 @@ def split_datasets(path='Datasets/',k=10):
             X_test = ss.transform(X_test)
 
             fold_dir_name = os.path.join(dir_name,str(i))
-#             print(fold_dir_name)
+            print(fold_dir_name)
             make_dir(fold_dir_name)
 
             # Save training and test set

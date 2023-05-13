@@ -45,7 +45,7 @@ vline_width = 0.9
 vline_style = 'dashed'
 
 syn_mark = '^'
-syn_c = 'C00000'
+syn_c = '#B60000'
 syn_label = 'synthetic samples'
 syn_alpha = 0.6
 

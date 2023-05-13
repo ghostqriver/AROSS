@@ -54,7 +54,7 @@ def choose_alpha(X_train,y_train,X_test,y_test,classifier,metrics,N,linkage,L=2,
         score_ls.append(score)
         safe_min_neighbor_ls.append(safe_min_neighbors)
         all_min_neighbor_ls.append(all_min_neighbors)
-        # print('alpha:',alpha,'| score:',score)
+        print('alpha:',alpha,'| score:',score)
         if score[det_metric] > best_score[det_metric]:
             best_score = score
             best_alpha = alpha
@@ -80,6 +80,10 @@ def choose_N(X_train,y_train,linkage,L=2):
         div = 3
         max_N = math.ceil(len(X_train)/div)
         N = PURITY(X_train,y_train,max_N,step,linkage,L) 
+    
+    # To avoid error in cleveland
+    if N is None:
+        N = 3
     return N
 
 def PURITY(X_train,y_train,max_N=None,step=5,linkage='ward',L=2):

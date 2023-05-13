@@ -339,7 +339,10 @@ def generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_
             if show == True and gen_num_!=gen_num:
                 print(f"* Failed with generating {gen_num} points, only {gen_num_} points generated around "+ area_name +F" of rep point {area.rep_point}")
         
-        area_iter = itertools.cycle(areas)
+        if len(min_all_safe_area)>0:
+            area_iter = itertools.cycle(min_all_safe_area)
+        else:
+            area_iter = itertools.cycle(areas)
         while counter < total_num:
             area = next(area_iter)
             gen_points = list(gen(area,1,scale=Gaussian_scale,tree=tree_,y_train=y,min_label=minlabel))

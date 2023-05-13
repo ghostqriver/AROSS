@@ -23,9 +23,12 @@ def read_fold(dataset,k):
     @brief Read splitted and standardized dataset 
     @return X_train,X_test,y_train,y_test
     '''
+    # We save 5 folds(0~4) for test, for runing 10 fold validation 10 times, we set k to 100, if k>9 it read data from the beginning
+    if k >= 5:
+       k = k%5 
     path = dataset.split('.')[0]
     path = os.path.join(path,str(k))
-    # print(path)
+    print(path)
     X_train,y_train = read_data(os.path.join(path,'train.csv'),norm=False)
     X_test,y_test = read_data(os.path.join(path,'test.csv'),norm=False)
     return X_train,X_test,y_train,y_test
@@ -50,7 +53,7 @@ def split_data(X,y,random_state=None):
     '''
     @return X_train,X_test,y_train,y_test
     '''
-    return train_test_split(X,y,stratify=y,random_state=random_state,)#)test_size=0.33)
+    return train_test_split(X,y,stratify=y,random_state=random_state,)
 
 def to_excel(file_name,dfs,sheet_names):    
     writer = pd.ExcelWriter(file_name)
@@ -80,8 +83,8 @@ def base_file(path):
         return path.split('/')[-1]
         
 def make_dir(dir):
-    if not os.path.exists(dir.split('/')[0]):
-        os.mkdir(dir.split('/')[0])
+    if not os.path.exists(dir):
+        os.mkdir(dir)
 
 def base_name(metric,classifier,k):
     return classifier+'_'+metric+'_k'+str(k)+'.xlsx'
@@ -110,7 +113,7 @@ def read_all_avg(path,file_name= 'all_avg_k10.xlsx'):
     @brief Extract the avg sheet of all test xlsx files into one xlsx file
     '''
     xlsxs = glob.glob(os.path.join(path,'*.xlsx'))
-    # file_name = os.path.join(path,file_name)
+    file_name = os.path.join(path,file_name)
     writer = pd.ExcelWriter(file_name)
     if os.path.isdir(path):
         for test_file_name in tqdm.tqdm(xlsxs):
@@ -120,4 +123,4 @@ def read_all_avg(path,file_name= 'all_avg_k10.xlsx'):
             df.columns = np.r_[['Datasets'],df.columns.values[1:]]
             df.to_excel(writer,sheet_name=sheet_name,index=False,index_label='')
         writer.save()
-    print('File saved in,',file_name)
+    print('File saved in',file_name)

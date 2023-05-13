@@ -96,8 +96,8 @@ def Gaussian_Generator(area,num,scale=None,tree=None,y_train=None,min_label=1):
     #     # Samples will be generated out of circle, but it is still safe due to filter
     #     radius_new = area.radius
     # else:
-    radius_new = np.sqrt(2) * area.radius /2 
-    
+    # radius_new = np.sqrt(2) * area.radius /2 
+    radius_new = area.radius
     if scale is None:
         scale = 0.8
 
