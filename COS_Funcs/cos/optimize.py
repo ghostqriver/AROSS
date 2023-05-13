@@ -54,7 +54,7 @@ def choose_alpha(X_train,y_train,X_test,y_test,classifier,metrics,N,linkage,L=2,
         score_ls.append(score)
         safe_min_neighbor_ls.append(safe_min_neighbors)
         all_min_neighbor_ls.append(all_min_neighbors)
-        print('alpha:',alpha,'| score:',score)
+        # print('alpha:',alpha,'| score:',score)
         if score[det_metric] > best_score[det_metric]:
             best_score = score
             best_alpha = alpha

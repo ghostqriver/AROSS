@@ -12,7 +12,7 @@ classifiers = ['knn','svm','decision_tree','random_forest']
 
 metrics = ['recall','f1_score','g_mean','kappa','auc']
 
-save_path = 'test_5_folds'
+save_path = 'test_5_folds_ada'
 cos_save_path = 'costest_5_folds'
 # cos_save_path = 'cos0'
 gan_save_path = 'gantest'
@@ -128,7 +128,7 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=5,linkage=None,L=2,all_
     K_fold_dict = {}
 
     file_name = os.path.join(path,cos_file_name(classifiers,metrics))
-    dict_file_name = file_name + '_folds.json'
+    dict_file_name = file_name + '_folds'+'.npy'
     file_name = file_name + '.xlsx'
     writer = pd.ExcelWriter(file_name)
 
@@ -163,9 +163,9 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=5,linkage=None,L=2,all_
 
         df.index = index
         df.to_excel(writer,sheet_name=classifier)
-
+    return K_fold_dict
     writer.save()
-    save_json(K_fold_dict,dict_file_name)
+    np.save(dict_file_name,K_fold_dict)
     print("File saved in",file_name,'and',dict_file_name)
     
 def cos_baseline_(dataset,metrics,classifier,k=5,linkage='ward',L=2,all_safe_weight=1,IR=1,show_folds=True):

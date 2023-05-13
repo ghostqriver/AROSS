@@ -25,10 +25,10 @@ def read_fold(dataset,k):
     '''
     # We save 5 folds(0~4) for test, for runing 10 fold validation 10 times, we set k to 100, if k>9 it read data from the beginning
     if k >= 5:
-       k = k%5 
+       k = k % 5 
     path = dataset.split('.')[0]
     path = os.path.join(path,str(k))
-    print(path)
+    # print(path)
     X_train,y_train = read_data(os.path.join(path,'train.csv'),norm=False)
     X_test,y_test = read_data(os.path.join(path,'test.csv'),norm=False)
     return X_train,X_test,y_train,y_test
