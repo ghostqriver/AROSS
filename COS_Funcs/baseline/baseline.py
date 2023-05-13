@@ -113,7 +113,7 @@ def baseline(classifiers=classifiers,metrics=metrics,k=5,oversamplers=oversample
     write_writer(writers,classifiers,metrics,k,oversamplers,datasets)
     return writers
 
-def cos_baseline(classifiers,metrics,datasets=datasets,k=5,linkage=None,L=2,all_safe_weight=1,IR=1,show_folds=True):
+def cos_baseline(classifiers,metrics=metrics,datasets=datasets,k=5,linkage=None,L=2,all_safe_weight=1,IR=1,show_folds=True):
 
     path = cos_save_path
     make_dir(path)
@@ -163,7 +163,6 @@ def cos_baseline(classifiers,metrics,datasets=datasets,k=5,linkage=None,L=2,all_
 
         df.index = index
         df.to_excel(writer,sheet_name=classifier)
-    return K_fold_dict
     writer.save()
     np.save(dict_file_name,K_fold_dict)
     print("File saved in",file_name,'and',dict_file_name)
