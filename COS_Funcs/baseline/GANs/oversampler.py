@@ -28,6 +28,7 @@ def WGAN(X_train,y_train,target='label',classes=[0,1]):
 
 
 def WGAN_filter(X_train,y_train,X_test,y_test,classifier,target='label',classes=[0,1]):
+    print(classifier)
     y_train_ = copy.deepcopy(y_train)
     minclass=[get_labels(y_train_)[0]]
 

@@ -85,14 +85,14 @@ def do_oversampling(model,X_train,y_train,**cos_para):
         ans = ANS()
         return ans.sample(X_train,y_train)
     
-    # elif model == 'wgan':
-    #     return WGAN(X_train,y_train)
+    elif model == 'wgan':
+        return WGAN(X_train,y_train)
     
-    # elif model == 'wgan_filter':
-    #     X_test = args['X_test']
-    #     y_test = args['y_test']
-    #     classifier = args['classifier']
-    #     return WGAN_filter(X_train,y_train,X_test,y_test,classifier)
+    elif model == 'wgan_filter':
+        X_test = cos_para['X_test']
+        y_test = cos_para['y_test']
+        classifier = cos_para['classifier']
+        return WGAN_filter(X_train,y_train,X_test,y_test,classifier)
     
     elif model == 'cos':
         # N,c,alpha,linkage,L,shrink_half,expand_half,all_safe_weight,all_safe_gen,half_safe_gen,Gaussian_scale,IR,minlabel,majlabel,visualize = get_cos_para(args[0])
