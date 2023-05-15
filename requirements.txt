@@ -1,6 +1,6 @@
 pandas
 scikit-learn==1.1.2
-imblearn==0.9.1
+imblearn
 smote_variants==0.7.1
 pyclustering==0.10.1.2
 kneed==0.8.1

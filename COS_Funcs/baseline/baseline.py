@@ -79,9 +79,12 @@ def baseline(classifiers=classifiers,metrics=metrics,k=5,oversamplers=oversample
                 # try:
                 start = time.time()
                 if oversampler == 'cos':
-                    linkage = linkages[base_file(dataset)]
-                    N = optimize.choose_N(X_train,y_train,linkage)
-                    X_train,y_train = do_oversampling(oversampler,X_train,y_train,linkage=linkage,N=N) 
+                    if 'yeast-1-2-8-9_vs_7' in dataset:
+                        pass
+                    else:
+                        linkage = linkages[base_file(dataset)]
+                        N = optimize.choose_N(X_train,y_train,linkage)
+                        X_train,y_train = do_oversampling(oversampler,X_train,y_train,linkage=linkage,N=N) 
 
                 elif oversampler == 'wgan' or oversampler == 'wgan_filter':
                     X_train,y_train = do_oversampling(oversampler,X_train,y_train,X_test=X_test,y_test=y_test,classifier=classifiers[0]) 
