@@ -3,7 +3,7 @@ from COS_Funcs.utils import *
 from sklearn import metrics
 import numpy as np
 
-def calc_score(metric,y_test,y_pred,pos_label):
+def calc_score(metric,y_test,y_pred,y_pred_proba=None,pos_label=1):
     '''
     @ Works only in binary classification case.
     @ metric: ['recall','f1_score','g_mean','kappa','auc','accuracy','precision'], for any other values it will return the Recall value by default
@@ -15,6 +15,7 @@ def calc_score(metric,y_test,y_pred,pos_label):
     
     elif metric == 'f1_score':
         return metrics.f1_score(y_test,y_pred,pos_label=pos_label)
+    
     elif metric == 'f2_score':
         pass
     
@@ -25,7 +26,9 @@ def calc_score(metric,y_test,y_pred,pos_label):
         return metrics.cohen_kappa_score(y_test,y_pred)
     
     elif metric == 'auc':
-        return auc(y_test,y_pred,pos_label=pos_label)
+        if y_pred_proba is None:
+            assert 'The probability is needed as input'
+        return metrics.roc_auc_score(y_test, y_pred_proba)
     
     elif metric == 'accuracy':
         return metrics.accuracy_score(y_test,y_pred)

@@ -45,11 +45,11 @@ def choose_alpha(X_train,y_train,X_test,y_test,classifier,metrics,N,linkage,L=2,
         
     for alpha in [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]:
         X_gen,y_gen,safe_min_neighbors,all_min_neighbors = COS(X_train,y_train,N,0,alpha,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR)
-        y_pred = do_classification(X_gen,y_gen,X_test,classifier)#,metric)
+        y_pred,y_pred_proba = do_classification(X_gen,y_gen,X_test,classifier)#,metric)
         
         score = {}
         for metric in metrics:
-            score[metric] = calc_score(metric,y_test,y_pred,pos_label)
+            score[metric] = calc_score(metric,y_test,y_pred,y_pred_proba,pos_label)
         
         score_ls.append(score)
         safe_min_neighbor_ls.append(safe_min_neighbors)

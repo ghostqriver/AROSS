@@ -12,8 +12,8 @@ classifiers = ['knn','svm','decision_tree','random_forest']
 
 metrics = ['recall','f1_score','g_mean','kappa','auc']
 
-save_path = 'test_5_folds_ada'
-cos_save_path = 'costest_5_folds'
+save_path = 'test_5_folds_auc'
+cos_save_path = 'costest_5_folds_auc'
 # cos_save_path = 'cos0'
 gan_save_path = 'gantest'
 
@@ -79,12 +79,12 @@ def baseline(classifiers=classifiers,metrics=metrics,k=5,oversamplers=oversample
                 # try:
                 start = time.time()
                 if oversampler == 'cos':
-                    if 'yeast-1-2-8-9_vs_7' in dataset:
-                        pass
-                    else:
-                        linkage = linkages[base_file(dataset)]
-                        N = optimize.choose_N(X_train,y_train,linkage)
-                        X_train,y_train = do_oversampling(oversampler,X_train,y_train,linkage=linkage,N=N) 
+                    # if 'yeast-1-2-8-9_vs_7' in dataset:
+                    #     pass
+                    # else:
+                    linkage = linkages[base_file(dataset)]
+                    N = optimize.choose_N(X_train,y_train,linkage)
+                    X_train,y_train = do_oversampling(oversampler,X_train,y_train,linkage=linkage,N=N) 
 
                 elif oversampler == 'wgan' or oversampler == 'wgan_filter':
                     X_train,y_train = do_oversampling(oversampler,X_train,y_train,X_test=X_test,y_test=y_test,classifier=classifiers[0]) 
@@ -102,9 +102,9 @@ def baseline(classifiers=classifiers,metrics=metrics,k=5,oversamplers=oversample
                 
                 # else:
                 for classifier in classifiers:     
-                    y_pred = do_classification(X_train,y_train,X_test,classifier)
+                    y_pred,y_pred_proba = do_classification(X_train,y_train,X_test,classifier)
                     for metric in metrics:
-                        score = calc_score(metric,y_test,y_pred,pos_label)
+                        score = calc_score(metric,y_test,y_pred,y_pred_proba,pos_label)
                         if show_folds:
                             print(random_state+1,'|',dataset,'|',oversampler,'|',classifier,'|',metric,':',end='')
                             print(score)
@@ -150,7 +150,7 @@ def cos_baseline(classifiers,metrics=metrics,datasets=datasets,k=5,linkage=None,
                 if 'yeast-1-2-8-9_vs_7' in dataset:
                     # I will run this latter
                     scores,score,alphas,folds_scores = [],{},[],[]
-                
+            
                 else:
                     scores,score,alphas,folds_scores,_,_ = cos_baseline_(dataset,metrics,classifier,k=k,linkage=linkage,L=L,all_safe_weight=all_safe_weight,IR=IR,show_folds=show_folds)
 

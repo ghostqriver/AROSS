@@ -41,19 +41,20 @@ def do_classification(X_train,y_train,X_test,classification_model,metric=None):
             model = KNeighborsClassifier()
         
         elif classification_model == 'svm':
-            model = SVC()
+            model = SVC(probability=True)
             
         elif classification_model == 'decision_tree':
             model = DecisionTreeClassifier(random_state=23,)
-        
+            
         elif classification_model == 'random_forest':
             model = RandomForestClassifier(random_state=23,)
-        
+                        
         elif classification_model == 'mlp':
             model = MLPClassifier()
-        
+            
         elif classification_model == 'naive_bayes':
             model = GaussianNB()
+            
     else:
         if classification_model == 'knn':
             model = get_knn(X_train, y_train, metric)
@@ -72,6 +73,7 @@ def do_classification(X_train,y_train,X_test,classification_model,metric=None):
         
         elif classification_model == 'naive_bayes':
             model = GaussianNB()
-            
-    model.fit(X_train,y_train)
-    return model.predict(X_test)
+    model.fit(X_train,y_train)         
+    y_pred = model.predict(X_test)
+    y_pred_proba = model.predict_proba(X_test)[:, 1]
+    return y_pred,y_pred_proba
