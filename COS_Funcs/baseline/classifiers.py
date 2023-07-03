@@ -73,6 +73,9 @@ def do_classification(X_train,y_train,X_test,classification_model,metric=None):
         
         elif classification_model == 'naive_bayes':
             model = GaussianNB()
+            
+        # LR
+        
     model.fit(X_train,y_train)         
     y_pred = model.predict(X_test)
     y_pred_proba = model.predict_proba(X_test)[:, 1]

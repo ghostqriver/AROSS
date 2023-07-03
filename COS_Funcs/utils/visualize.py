@@ -1,17 +1,20 @@
-figsize = (7,6)
+figsize = (7,7)
 
 rep_color = '#592626'
 rep_mark = 'x'
 rep_label = 'representative points'
-rep_size = 35
+rep_size = 45
 
 min_mark = 'o'
-min_size = 15
+# min_size = 15
+min_size = 45
 min_color ='blue'
 min_label = 'minority class'
    
 maj_mark = 's'
-maj_size = 9
+# maj_size = 9
+maj_size = 29
+
 maj_color = 'gray'
 maj_label = 'majority class'
 
@@ -30,9 +33,11 @@ point_colors = ['#1F77B4',
 
 alpha = 0.8
 all_safe_color = 'k'
+all_safe_line_style = 'dashed'
 all_safe_label='all safe area'
 half_safe_color = 'brown'
 half_safe_label='half safe area'
+half_safe_line_style = 'dashed'
 
 grid_color = 'gray'
 grid_line = 'dashed'
@@ -45,10 +50,11 @@ vline_width = 0.9
 vline_style = 'dashed'
 
 syn_mark = '^'
-syn_c = '#B60000'
+syn_c = '#B22222'
 syn_label = 'synthetic samples'
-syn_alpha = 0.6
-
+syn_alpha = 0.7
+# syn_size = 7
+syn_size = 17
 import colorir
 grad = colorir.PolarGrad(["#2304C0","FE6546","80F365","1B205F"])
 colors = iter(grad.n_colors(7)) #next(colors)
@@ -61,22 +67,25 @@ from COS_Funcs.utils import get_labels
 from COS_Funcs.cos import generate as G
 
 def def_figure():
-    plt.figure(figsize=figsize)
-    plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
-
+    plt.figure(figsize=figsize,dpi=200)
+    # plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
+    plt.yticks([])
+    plt.xticks([])
+    
 def show_2d_scatter(X,y=None):
     '''
     @brief Show the scatter for a 2D dataset
     '''
+    plt.figure(figsize=figsize,dpi=800)
     if y is None: 
         plt.scatter(X[:,0],X[:,1],marker=maj_mark,c=maj_color)
         plt.show()
         return 
     minlabel,majlabel = get_labels(y)
     def_figure()
-    plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
+    plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size,alpha=alpha)
     plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size,alpha=alpha)
-    plt.legend()
+    plt.legend(loc='upper right')
     plt.show()
 
 def show_clusters(clusters):
@@ -118,7 +127,7 @@ def show_clusters_(X,labels,y,all_reps):
     plt.scatter(clus[ys==majlabel,0],clus[ys==majlabel,1],alpha=alpha,marker=maj_mark,s=maj_size,c=point_color,label=maj_label)
     plt.scatter(all_reps[:,0],all_reps[:,1],marker=rep_mark,c=rep_color,s=rep_size,alpha=alpha,label=rep_label)
 
-    plt.legend()
+    plt.legend(loc='upper right')
     plt.show()
 
 def show_rep_points(X,y,clusters):
@@ -158,8 +167,8 @@ def show_areas(X,y,min_all_safe_area,min_half_safe_area,):
     plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size)
 
     # The areas
-    plt.plot(X[0,0],X[0,1], c=all_safe_color, label='all safe area')
-    plt.plot(X[0,0],X[0,1], c=half_safe_color, label='half safe area')
+    plt.plot(X[0,0],X[0,1], c=all_safe_color, label='all safe area',linestyle=all_safe_line_style)
+    plt.plot(X[0,0],X[0,1], c=half_safe_color, label='half safe area',linestyle=half_safe_line_style)
     
     for area in min_all_safe_area:
         radius = area.radius
@@ -170,8 +179,8 @@ def show_areas(X,y,min_all_safe_area,min_half_safe_area,):
         x = np.linspace(rep_point[0] - radius, rep_point[0] + radius, 5000)
         y1 = np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
         y2 = -np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
-        plt.plot(x, y1, c=all_safe_color)
-        plt.plot(x, y2, c=all_safe_color)
+        plt.plot(x, y1, c=all_safe_color,linestyle=all_safe_line_style)
+        plt.plot(x, y2, c=all_safe_color,linestyle=all_safe_line_style)
 
         
     for area in min_half_safe_area:
@@ -183,8 +192,8 @@ def show_areas(X,y,min_all_safe_area,min_half_safe_area,):
         x = np.linspace(rep_point[0] - radius, rep_point[0] + radius, 5000)
         y1 = np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
         y2 = -np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
-        plt.plot(x, y1, c=half_safe_color)
-        plt.plot(x, y2, c=half_safe_color)
+        plt.plot(x, y1, c=half_safe_color,linestyle=half_safe_line_style)
+        plt.plot(x, y2, c=half_safe_color,linestyle=half_safe_line_style)
 
     plt.scatter(rep_point[0],rep_point[1],marker=rep_mark,c=rep_color,s=rep_size,label=rep_label) 
     plt.legend()
@@ -196,8 +205,8 @@ def draw_cycle(center,r,c='k'):
     x = np.linspace(center[0] - r, center[0] + r, 5000)
     y1 = np.sqrt(abs(r**2 - (x - center[0])**2)) + center[1]
     y2 = -np.sqrt(abs(r**2 - (x - center[0])**2)) + center[1]
-    plt.plot(x, y1, c)
-    plt.plot(x, y2, c)
+    plt.plot(x, y1, c,linestyles=all_safe_line_style)
+    plt.plot(x, y2, c,linestyles=all_safe_line_style)
 
 def show_single_area(area,new_points=[],circle_c='k',minlabel=None,majlabel=None,close_axis=True):
     
@@ -233,9 +242,9 @@ def show_oversampling(X,y,X_oversampled,y_oversampled):
     def_figure()
     plt.scatter(X[y==minlabel,0],X[y==minlabel,1],marker=min_mark,c=min_color,label=min_label,s=min_size)
     plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size,alpha=alpha)
-    plt.scatter(X_oversampled[origin_index:,0],X_oversampled[origin_index:,1],marker=syn_mark,c=syn_c,label=syn_label,alpha=syn_alpha)
-    plt.legend()
-    plt.show()
+    plt.scatter(X_oversampled[origin_index:,0],X_oversampled[origin_index:,1],marker=syn_mark,label=syn_label,alpha=syn_alpha,s=syn_size,c=syn_c)
+    # plt.legend()
+    # plt.show()
 
 
 def show_cos(X,y,X_oversampled,y_oversampled,min_all_safe_area,min_half_safe_area,minlabel=None,majlabel=None):
@@ -248,8 +257,8 @@ def show_cos(X,y,X_oversampled,y_oversampled,min_all_safe_area,min_half_safe_are
     plt.scatter(X[y==majlabel,0],X[y==majlabel,1],marker=maj_mark,c=maj_color,label=maj_label,s=maj_size)
 
     # The areas
-    plt.plot(X[0,0],X[0,1], c=all_safe_color,label=all_safe_label)
-    plt.plot(X[0,0],X[0,1], c=half_safe_color,label=half_safe_label)
+    plt.plot(X[0,0],X[0,1], c=all_safe_color,label=all_safe_label,linestyle=all_safe_line_style)
+    plt.plot(X[0,0],X[0,1], c=half_safe_color,label=half_safe_label,linestyle=half_safe_line_style)
     
     for area in min_all_safe_area:
         radius = area.radius
@@ -260,8 +269,8 @@ def show_cos(X,y,X_oversampled,y_oversampled,min_all_safe_area,min_half_safe_are
         x = np.linspace(rep_point[0] - radius, rep_point[0] + radius, 5000)
         y1 = np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
         y2 = -np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
-        plt.plot(x, y1, c=all_safe_color)
-        plt.plot(x, y2, c=all_safe_color)
+        plt.plot(x, y1, c=all_safe_color,linestyle=all_safe_line_style)
+        plt.plot(x, y2, c=all_safe_color,linestyle=all_safe_line_style)
 
         
     for area in min_half_safe_area:
@@ -273,8 +282,8 @@ def show_cos(X,y,X_oversampled,y_oversampled,min_all_safe_area,min_half_safe_are
         x = np.linspace(rep_point[0] - radius, rep_point[0] + radius, 5000)
         y1 = np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
         y2 = -np.sqrt(abs(radius**2 - (x - rep_point[0])**2)) + rep_point[1]
-        plt.plot(x, y1, c=half_safe_color)
-        plt.plot(x, y2, c=half_safe_color)
+        plt.plot(x, y1, c=half_safe_color,linestyle=half_safe_line_style)
+        plt.plot(x, y2, c=half_safe_color,linestyle=half_safe_line_style)
 
     origin_index = len(X)
     plt.scatter(X_oversampled[origin_index:,0],X_oversampled[origin_index:,1],marker=syn_mark,c=syn_c,label=syn_label,alpha=syn_alpha)

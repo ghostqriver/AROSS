@@ -58,8 +58,9 @@ def choose_alpha(X_train,y_train,X_test,y_test,classifier,metrics,N,linkage,L=2,
         if score[det_metric] > best_score[det_metric]:
             best_score = score
             best_alpha = alpha
-        
-    return best_alpha,best_score,score_ls,safe_min_neighbor_ls,all_min_neighbor_ls
+            best_x = X_gen
+            best_y = y_gen
+    return best_alpha,best_score,score_ls,safe_min_neighbor_ls,all_min_neighbor_ls,best_x,best_y
 
 def choose_N(X_train,y_train,linkage,L=2):
     step = 5
@@ -130,10 +131,10 @@ def BIC(X_train,y_train,max_N=None,step=5,linkage='ward',L=2):
         BIC_scores[n] = BIC_score
     
     # def_figure()
-    # plt.plot(list(BIC_scores.keys()),list(BIC_scores.values()),label='BIC scores',color=plot_line_color,linewidth=plot_line_width,)
-    # plt.vlines(max_bic_n,plt.ylim()[0], plt.ylim()[1], linestyles=vline_style,linewidth=vline_width,colors=vline_color)
-    # plt.legend()
-    # plt.show()
+    plt.plot(list(BIC_scores.keys()),list(BIC_scores.values()),label='BIC scores',color=plot_line_color,linewidth=plot_line_width,)
+    plt.vlines(max_bic_n,plt.ylim()[0], plt.ylim()[1], linestyles=vline_style,linewidth=vline_width,colors=vline_color)
+    plt.legend()
+    plt.show()
     return max_bic_n 
 
 def bic_score(X: np.ndarray, labels: np.array):
