@@ -1,5 +1,6 @@
 '''
 @brief area expand from represnetative points
+@author yizhi
 '''
 import numpy as np
 

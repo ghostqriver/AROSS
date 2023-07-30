@@ -30,11 +30,9 @@ def read_data(dataset,norm=True):
 
 def read_fold(dataset,k):
     '''
-    @brief Read one of the fold of splitted and standardized dataset we saved
+    @brief Read one of the fold of splitted and standardized 5 Fold dataset we saved
     @return X_train,X_test,y_train,y_test
-    @note I saved 5 folds(0~4)
     '''
-    # We save  for test, for runing 10 fold validation 10 times, we set k to 100, if k>9 it read data from the beginning
     if k >= 5:
        k = k % 5 
     path = dataset.split('.')[0]

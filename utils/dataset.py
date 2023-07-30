@@ -95,7 +95,7 @@ def split_datasets(path='Datasets/',k=5):
         # read original file in
         X,y = read_data(dataset,norm=False)
 
-        # Split data by 10 folds
+        # Split data
         skf = StratifiedKFold(n_splits=k)
         for i, (train_index, test_index) in enumerate(skf.split(X, y)):
             X_train = X[train_index]

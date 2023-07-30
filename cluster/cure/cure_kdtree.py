@@ -2,6 +2,7 @@
 @brief CURE's kd tree implementation
 @details Faster than cure, cure_single with L=2 and L=3 are implemented
 @reference: https://github.com/annoviko/pyclustering/blob/bf4f51a472622292627ec8c294eb205585e50f52/pyclustering/cluster/cure.py
+@author yizhi
 """
 
 import numpy as np

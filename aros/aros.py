@@ -9,25 +9,27 @@ import itertools
 from cluster import clustering
 from utils import visualize as V
 from utils import get_labels
-from utils.analyze import min_proportion
 from .nearest_neighbor import create_kd
 from . import generate as G
 from .area import *
+from .param import param
 
 
-def AROS(X,y,N,linkage='ward',alpha=0,L=2,IR=1,all_safe_weight=1,visualize=False):
+def AROS(X:np.ndarray,y:np.array,N=None,linkage=None,alpha=0,L=2,IR=1,all_safe_weight=1,visualize=False):
     '''
     @brief AROS algorithm implementation
     @param 
         X: Data
         y: label
-        N: n_clusters
-        linkage: linkage of agglometative clustering
+        N: n_clusters, when not given it will be determined by BIC
+        linkage: linkage of agglometative clustering, when not given it will be determined by CPCC
         alpha: shrink_rate of represents
         L: distance metric
         IR: expected_IR
-    @return
+    @return X_oversampled,y_oversampled
     ''' 
+    # Determine the parameter
+    linkage,N = param(X,y,N,linkage,alpha,L,IR,all_safe_weight)
     # Cluster the dataset and extract representatives
     minlabel,majlabel = get_labels(y)
     clusters,all_reps,_,labels = clustering(X,y,N,alpha,linkage,L)

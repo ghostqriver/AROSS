@@ -13,6 +13,7 @@
     linkage = 'ward' #'ward'/'single'/'complete'/'average'
     L = 2 #/1/3 L only serves as distance for extracting representatives, won't affect clustering result
     clusters,all_reps,num_reps = agg.Agglomerativeclustering(X,y,N,alpha,linkage,L)
+@author yizhi
 '''
 
 

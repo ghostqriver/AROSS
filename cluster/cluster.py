@@ -1,3 +1,7 @@
+'''
+@brief extract reps from clusters
+@author yizhi
+'''
 import numpy as np
 import math
 
@@ -71,7 +75,8 @@ class Cluster:
             self.rep_points = []
         elif self.c == 1:
             self.rep_points = [self.center]
-        elif self.num <= self.c: # if total number of points less than c, the representative points will be points itselves
+        # if total number of points less than c, the representative points will be points
+        elif self.num <= self.c: 
             tmpSet = self.points
             self.add_shrink(tmpSet,alpha)
         else:
@@ -82,7 +87,6 @@ class Cluster:
                     if i==0:
                         minDist = calc_dist(p,self.center,L,cov_i)
                     else:
-                        # for a given p, if p's min distance to any q in tmpset is biggest, then p is next representative point 
                         minDist = np.min([calc_dist(p,q,L,cov_i) for q in tmpSet])
                     if minDist >= maxDist:
                         maxPoint = p

@@ -1,27 +1,25 @@
 '''
-@brief CURE's brute force implementation (use the fast_dist)
-@details Faster than cure_bf, cure_single cure_complete cure_average and cure_centroid centroid with L=2 and L=3 are implemented
-
+@brief CURE's brute force implementation
+@details Slow but works as a ground truth when developing speeding up versions
 @example  
-    from COS_Funcs.cluster import cure
+    from COS_Funcs.cluster import cure_bf
     from COS_Funcs.utils import read_data
-    from COS_Funcs.utils import visualize
     
     X,y = read_data('Datasets\\sampledata_new_3.csv')
     num_expected_clusters = 30
     c = 3
     alpha = 0.5
-    linkage = 'cure_single' #/'cure_single'/'cure_complete'/'cure_average'/'cure_centroid' /'centroid'
+    linkage = 'cure_single' #/'cure_single'/'cure_complete'/'cure_average'/'cure_centroid' /'centroid'/'cure_ward' 
     L = 2 #/1/3
-    clusters,all_reps,num_reps = cure.Cure(X,num_expected_clusters,c,alpha,linkage='cure_single',L=2,visualize = False)
+    clusters,all_reps,num_reps = cure_bf.Cure(X,num_expected_clusters,c,alpha,linkage='cure_single',L=2,visualize = False)
+@author yizhi
+
 '''
 import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt
-from utils.dist import calc_cov_i
-from utils.dist import fast_dist as calc_dist
 from utils import visualize as V
-
+from utils.dist import calc_dist,calc_cov_i
 
 class Cluster:
     '''
@@ -89,16 +87,16 @@ class Cluster:
                 maxDist = 0
                 for p in self.points:
                     if i==0:
-                        minDist = calc_dist(p,self.center,L=L,cov_i=cov_i)
+                        minDist = calc_dist(p,self.center,L,cov_i)
                     else:
                         # for a given p, if p's min distance to any q in tmpset is biggest, then p is next representative point 
-                        minDist = np.min([calc_dist(p,q,L=L,cov_i=cov_i) for q in tmpSet])
+                        minDist = np.min([calc_dist(p,q,L,cov_i) for q in tmpSet])
                     if minDist >= maxDist:
                         maxPoint = p
                         maxDist = minDist
                 tmpSet.append(maxPoint)
         self.add_shrink(tmpSet,alpha)
-          
+        
     def clus_dist(self,another_cluster,linkage,L,cov_i):
         '''
         Calculate the distance between two clusters
@@ -110,10 +108,9 @@ class Cluster:
             if 'cure_ward' - calculate the variance if merging two clusters as the distance of two clusters;  
         L: the distance metric, L=1 the Manhattan distance, L=2 the Euclidean distance, by default L=2
         '''
-
         # min_dist = calc_dist(self.rep_points[0],another_cluster.rep_points[0],L)
         if linkage == 'cure_centroid' or linkage == 'centroid' :
-            min_dist = calc_dist(self.center,another_cluster.center,L=L,cov_i=cov_i)
+            min_dist = calc_dist(self.center,another_cluster.center,L,cov_i)
         elif linkage == 'cure_ward':
             min_dist = np.var(np.vstack([self.points,another_cluster.points]),axis=0).mean() - (np.var(self.points,axis=0) + np.var(another_cluster.points,axis=0)).mean()
             
@@ -125,9 +122,9 @@ class Cluster:
                 for ind2,j in enumerate(another_cluster.rep_points):
                     
                     if ind1 == 0 and ind2 == 0:
-                        min_dist = calc_dist(i,j,L=L,cov_i=cov_i)
+                        min_dist = calc_dist(i,j,L,cov_i)
                     
-                    dist_i = calc_dist(i,j,L=L,cov_i=cov_i)
+                    dist_i = calc_dist(i,j,L,cov_i)
                     
                     if linkage == 'cure_complete':
                         if dist_i > min_dist:
@@ -140,7 +137,6 @@ class Cluster:
                         if dist_i < min_dist:
                             min_dist = dist_i
         return min_dist
-    
     
     @staticmethod
     def gen_clusters(X):
@@ -179,6 +175,7 @@ class dist_matrix():
     '''
     def __init__(self,X,linkage,L,cov_i):
         self.matrix = np.zeros([len(X),len(X)])
+        # self.cov_i = cov_i
         self.gen_matrix(X,linkage,L,cov_i)
         
     def gen_matrix(self,X,linkage,L,cov_i):
@@ -191,7 +188,7 @@ class dist_matrix():
                     if linkage=='cure_ward':
                         self.matrix[i][j] = np.var(np.vstack([X[i],X[j]]),axis=0).mean()
                     else:
-                        self.matrix[i][j] = calc_dist(X[i],X[j],L=L,cov_i=cov_i)  
+                        self.matrix[i][j] = calc_dist(X[i],X[j],L,cov_i)  
                     
     def nearest_neighbor(self):
         min_dist = np.min(self.matrix)
@@ -222,19 +219,6 @@ class dist_matrix():
         df = pd.DataFrame(self.matrix)
         print(df)
         
-        
-def visualize_cure(clusters,dist,neighbor1 = None,neighbor2 = None,min_dist = None):
-    '''
-    Will be called when the visualize = True in Cure
-    '''
-    Cluster.visualize_cluster(clusters)
-    dist.visualize_matrix()   
-    if neighbor1 != None:
-        print(neighbor1,'and',neighbor2,'cluster will be merged, with distance',min_dist,'.')
-    else:
-        print('Over.')
-    print('-'*60)
-    
     
 def Cure(X,num_expected_clusters,c,alpha,linkage='cure_single',L=2,visualize = False):
     '''
@@ -263,7 +247,7 @@ def Cure(X,num_expected_clusters,c,alpha,linkage='cure_single',L=2,visualize = F
     
     num_clusters = len(clusters)
         
-    # Merge two cluster until reach num_expected_clusters(N)
+    # Merge two cluster if they are nearest to each other
     while(num_clusters > num_expected_clusters):
         
         neighbor1,neighbor2,min_dist = dist.nearest_neighbor()
@@ -284,18 +268,30 @@ def Cure(X,num_expected_clusters,c,alpha,linkage='cure_single',L=2,visualize = F
     if visualize == True:
         visualize_cure(clusters,dist)
     
-    # Flatten all representative points and get label of clusters
-    
-    lst = [] 
-    labels = [0 for i in range(len(X))]
-
-    for ind,i in enumerate(clusters):
+    # Flatten all representative points 
+    lst = []
+    for i in clusters:
         for j in i.rep_points:
-            lst.append(j) 
-        labels[i.index] = ind
-
+            lst.append(j)  
     all_reps = np.array(lst) 
     num_reps = (all_reps.shape[0])
-         
+    
+#     # Generate labels ids (when we exclude noise then it will be used)
+#     label=np.array()
+#     for num,i in enumerate(clusters):
+#         label[i.index]=num        
 
-    return clusters,all_reps,num_reps,np.array(labels)
+    return clusters,all_reps,num_reps
+
+        
+def visualize_cure(clusters,dist,neighbor1 = None,neighbor2 = None,min_dist = None):
+    '''
+    Will be called when the visualize = True in Cure
+    '''
+    Cluster.visualize_cluster(clusters)
+    dist.visualize_matrix()   
+    if neighbor1 != None:
+        print(neighbor1,'and',neighbor2,'cluster will be merged, with distance',min_dist,'.')
+    else:
+        print('Over.')
+    print('-'*60)
