@@ -1,4 +1,4 @@
-# COS-Cluster_based_OverSampling
+# AROS: Area-based Representative points OverSampling in Imbalance Learning
 
 ## Decription
 Cluster-based sampling algorithms are particularly interesting because they provide an added element of flexibility that is not available in most simple and synthetic sampling algorithms and accordingly can be tailored to target very specific problems.
