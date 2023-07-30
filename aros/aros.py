@@ -1,5 +1,6 @@
 '''
 @brief AROS's kd-tree nearest neighbor implementation
+@author yizhi
 '''
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,7 +16,7 @@ from .area import *
 from .param import param
 
 
-def AROS(X:np.ndarray,y:np.array,N=None,linkage=None,alpha=0,L=2,IR=1,all_safe_weight=1,visualize=False):
+def AROS(X:np.ndarray,y:np.ndarray,N=None,linkage=None,alpha=0,L=2,IR=1,all_safe_weight=1,visualize=False):
     '''
     @brief AROS algorithm implementation
     @param 

@@ -1,6 +1,7 @@
 '''
 @brief COS's brute force implementation
 @details Slow but works as a ground truth when developing speeding up versions
+@author yizhi
 '''
 import numpy as np
 import matplotlib.pyplot as plt

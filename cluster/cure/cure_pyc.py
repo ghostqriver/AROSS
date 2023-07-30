@@ -13,6 +13,7 @@
     alpha = 0.5
     L = 2 #/1/3 Here the L only serves as distance for extracting representatives, won't affect clustering result
     clusters,all_reps,num_reps = cure.Cure(X,num_expected_clusters,c,alpha,linkage,L,visualize = False)
+@author yizhi
 '''
 
 from pyclustering.cluster.cure import cure as pyc_cure

@@ -1,5 +1,6 @@
 '''
 @brief generators 
+@author yizhi
 '''
 
 import numpy as np

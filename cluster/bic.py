@@ -139,7 +139,7 @@ def purity_score(y: np.ndarray, labels: np.ndarray):
         pred_partition = labels[filter_]
         
         # figure out which gt partition this predicted cluster contains the most points of
-        mode_ = stats.mode(gt_partition)
+        mode_ = stats.mode(gt_partition,keepdims=True)
         max_gt_cluster = mode_[0][0]
         
         # how many points in the max cluster does the current cluster contain

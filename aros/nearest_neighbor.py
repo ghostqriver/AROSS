@@ -1,5 +1,6 @@
 '''
 @brief k-d tree and searching NN
+@author yizhi
 '''
 
 import numpy as np

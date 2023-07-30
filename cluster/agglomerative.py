@@ -16,7 +16,6 @@
 @author yizhi
 '''
 
-
 from sklearn.cluster import AgglomerativeClustering as AgglomerativeClustering_
 
 from utils import get_labels
