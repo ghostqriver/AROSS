@@ -13,6 +13,8 @@ def param(X,y,N,linkage,alpha,L,IR,all_safe_weight=1):
     
     assert isinstance(y,np.ndarray), 'y should be an 1-D array'
     
+    assert len(X) == len(y), 'X and y should have the same length'
+    
     if linkage is None:
         linkage = cpcc(X)
     assert linkage in ['ward','single','complete','average'], 'The given linkage should be one of ward, single, complete or average'
@@ -30,3 +32,5 @@ def param(X,y,N,linkage,alpha,L,IR,all_safe_weight=1):
     assert (isinstance(all_safe_weight,int) or isinstance(all_safe_weight,float))  and all_safe_weight > 0, 'Weight should be a positive number'
         
     return linkage,N
+
+
