@@ -39,9 +39,9 @@ AROS can be parsed into four steps：
 
   1. Clustering the input features using agglomerative clustering [1]
     
-  1.1 When the `n_cluster` is not given, the algorithm will determine it by BIC automatically [2]
+    1.1 When the `n_cluster` is not given, the algorithm will determine it by BIC automatically [2]
     
-  1.2 When the `linkage` is not givem, the algorithm will determine it by CPCC automatically [3]
+    1.2 When the `linkage` is not givem, the algorithm will determine it by CPCC automatically [3]
 
   2. Extracting the representative points from clustering results [4]
   3. Populating and classifying areas surrounding representative points
