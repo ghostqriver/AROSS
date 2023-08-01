@@ -53,10 +53,10 @@ def AROS(X:np.ndarray,y:np.ndarray,N=None,linkage=None,alpha=0,L=2,IR=1,all_safe
     
     if visualize:
         print('Generated dataset:') 
-        V.show_oversampling(X,y,X_generated,y_generated)
+        V.show_oversampled(X,y,X_generated,y_generated)
         plt.show()
         print('All:')
-        V.show_cos(X,y,X_generated,min_all_safe_area,min_half_safe_area,minlabel,majlabel)
+        V.show_aros(X,y,X_generated,min_all_safe_area,min_half_safe_area,minlabel,majlabel)
         
     return X_generated,y_generated#,safe_min_neighbors,all_min_neighbors
 
@@ -107,7 +107,6 @@ def generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_
         print(f"So generate ({all_safe_weight}*{len(min_all_safe_area)})/({all_safe_weight}*{len(min_all_safe_area)}+{len(min_half_safe_area)})={total_num_all} in all safe areas,{len(min_half_safe_area)}/({all_safe_weight}*{len(min_all_safe_area)}+{len(min_half_safe_area)})={total_num_half} in half safe areas")
     
     new_points = []
-    gen = G.Gaussian_Generator
     for areas in [min_all_safe_area,min_half_safe_area]:
         if areas == min_all_safe_area:
             area_name = 'all safe area'
@@ -136,7 +135,7 @@ def generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_
             if visualize:
                 print(f"{num_neighbor} minority neighbors in current area, so generate {gen_num} points around "+ area_name +F" of rep point {area.rep_point}")
             
-            gen_points = list(gen(area,gen_num,tree=tree_,y_train=y,min_label=minlabel))
+            gen_points = list(G.Gaussian_Generator(area,gen_num,tree=tree_,y=y,min_label=minlabel))
             new_points += gen_points
             gen_num_ = len(gen_points)
             counter += gen_num_
@@ -147,12 +146,13 @@ def generate(min_all_safe_area,min_half_safe_area,total_num,total_num_all,total_
         # Distribute remaining synthetic instances to safe/half-safe areas
         if len(min_all_safe_area)>0:
             area_iter = itertools.cycle(min_all_safe_area)
-            tree = None
+            tree_ = None
         else:
             area_iter = itertools.cycle(areas)
+            tree_ = tree
         while counter < total_num:    
             area = next(area_iter)
-            gen_points = list(gen(area,1,tree=tree_,y_train=y,min_label=minlabel))
+            gen_points = list(G.Gaussian_Generator(area,1,tree=tree_,y=y,min_label=minlabel))
             new_points += gen_points 
             counter += len(gen_points) 
             if visualize == True and len(gen_points)==1:

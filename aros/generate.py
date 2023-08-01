@@ -9,12 +9,12 @@ import pandas as pd
 from .nearest_neighbor import nn_kd
 
 
-def Gaussian_Generator(area,num,tree=None,y_train=None,min_label=None):
+def Gaussian_Generator(area,num,tree=None,y=None,min_label=None):
     
     # Shrink the radiu of area / truncate1
     radius_new = np.sqrt(2) * area.radius /2 
 
-    new_points = Gaussian_Generator_(area,radius_new,num,tree,y_train,min_label)
+    new_points = Gaussian_Generator_(area,radius_new,num,tree,y,min_label)
     
     return np.array(new_points)
 

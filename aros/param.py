@@ -2,12 +2,13 @@
 @brief checking the validity and determining the parameter for AROS
 @author yizhi
 '''
+import numpy as np
 
 from cluster.cpcc import cpcc
 from cluster.bic import choose_N
-from .optimize import *
 
-def param(X,y,N,linkage,alpha,L,IR,all_safe_weight=1):
+
+def param(X,y,N,linkage,alpha,L,IR,all_safe_weight):
     
     assert isinstance(X,np.ndarray), 'X should be a 2-D array'
     

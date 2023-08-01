@@ -1,12 +1,42 @@
 # AROS: Area-based Representative points OverSampling in Imbalance Learning
 
-## Decription
-Cluster-based sampling algorithms are particularly interesting because they provide an added element of flexibility that is not available in most simple and synthetic sampling algorithms and accordingly can be tailored to target very specific problems.
-The Cluster_based_OverSampling(COS) algorithm is used to solve one of the imbalance learning problems, the lack of data, by extracting distribution of the dataset and populating safe and half-safe areas, then to generate synthetic points use the different weights.
+The Area-based Representative points OverSampling(AROS) is the algorithm targeting the class imbalance problem, it balances the dataset by generating synthetic instances of minority class in safe and half-safe areas populated surrounding representative points, which is efficient with capturing the disjoints subsets of minority class and avoiding imposing class overlapping to the dataset.
 
-Get access to the report: [Report 2](https://drive.google.com/file/d/1BwnHmL9S0Rry3GJgYk2M32AcL8rH43Qa/view?usp=sharing)
 
-### Basic usage
+## Installation
+<!--```bash
+git clone https://github.com/felix-last/kmeans_smote.git
+```-->
+
+## Basic usage
+```bash
+from AROS import AROS
+from utils.utils import read_data
+from utils.visualize import show_oversampled
+
+X,y = read_data('Datasets/sampledata_new_3.csv')
+
+ar = AROS(5,'ward')
+X_oversampled,y_oversampled = ar.fit_sample(X,y)
+show_oversampled(X,y,X_oversampled,y_oversampled)
+```
+
+Output figure:
+<p align="left">
+  <img src="images/output_figure.png" width="500" title="putput-figure">
+</p>
+
+## About AROS
+AROS can be parsed into four steps：
+<p align="left">
+  <img src="images/4-steps.png" width="800" title="putput-figure">
+</p>
+
+
+## Reference
+
+Soon to be replenished
+
 
 <!-- <p align="left">
   <img src="ASAP-logo.png" width="200" title="logo">

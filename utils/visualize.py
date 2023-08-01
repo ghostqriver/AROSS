@@ -75,7 +75,7 @@ from aros import generate as G
 
 
 def def_figure():
-    plt.figure(figsize=figsize,dpi=200)
+    plt.figure(figsize=figsize)#,dpi=200)
     # plt.grid(visible=True,color=grid_color, linestyle=grid_line, linewidth=grid_line_width)
     plt.yticks([])
     plt.xticks([])
@@ -248,7 +248,7 @@ def show_single_area(area,new_points=[],circle_c='k',minlabel=None,majlabel=None
     plt.show()
 
 
-def show_oversampling(X,y,X_oversampled,y_oversampled):
+def show_oversampled(X,y,X_oversampled,y_oversampled):
     '''
     @brief show synthetic samples  
     '''
@@ -262,7 +262,7 @@ def show_oversampling(X,y,X_oversampled,y_oversampled):
     plt.show()
 
 
-def show_cos(X,y,X_oversampled,min_all_safe_area,min_half_safe_area,minlabel=None,majlabel=None):
+def show_aros(X,y,X_oversampled,min_all_safe_area,min_half_safe_area,minlabel=None,majlabel=None):
     '''
     @brief visualize areas and synthetic instances
     '''
