@@ -1,6 +1,6 @@
 # AROS: Area-based Representative points OverSampling in Imbalance Learning
 
-The Area-based Representative points OverSampling(AROS) is the algorithm targeting the class imbalance problem, it balances the dataset by generating synthetic instances of minority class in safe and half-safe areas populated surrounding representative points, which is efficient with capturing the disjoints subsets of minority class and avoiding imposing class overlapping to the dataset.
+The Area-based Representative points OverSampling(AROS) is an algorithm targeting the class imbalance problem, it balances dataset by generating synthetic instances of minority class in safe and half-safe areas populated surrounding representative points, which is efficient with capturing the disjoints subsets of minority class and avoiding imposing class overlapping to the dataset.
 
 ## Cite AROS 
 If you wish to refer our work, please use the following BibTeX citation.
@@ -38,7 +38,9 @@ AROS can be parsed into four steps：
 </p>
 
   1. Clustering the input features using agglomerative clustering [1]
+    
     1.1 When the `n_cluster` is not given, the algorithm will determine it by BIC automatically [2]
+    
     1.2 When the `linkage` is not givem, the algorithm will determine it by CPCC automatically [3]
   2. Extracting the representative points from clustering results [4]
   3. Populating and classifying areas surrounding representative points
@@ -50,8 +52,11 @@ AROS can be parsed into four steps：
 
 ## Reference
 [1] Fabian Pedregosa et al. “Scikit-learn: Machine learning in Python”. In: the Journal of machine Learning research 12 (2011), pp. 2825–2830.
+
 [2] Gideon Schwarz. “Estimating the dimension of a model”. In: The annals of statistics (1978), pp. 461–464.
+
 [3] James S Farris. “On the cophenetic correlation coefficient”. In: Systematic Zoology 18.3 (1969), pp. 279–285.
+
 [4] Sudipto Guha, Rajeev Rastogi, and Kyuseok Shim. “CURE: An efficient clustering algorithm for large databases”. In: ACM Sigmod record 27.2 (1998), pp. 73–84.
 
 
