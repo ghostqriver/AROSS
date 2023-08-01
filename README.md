@@ -48,7 +48,7 @@ AROS can be parsed into four steps：
   4. Generating synthetic instances using the Gaussian Generator
 
   <p align="left">
-  <img src="images/output.gif" width="500" title="putput-figure">
+  <img src="images/output_.gif" width="500" title="putput-figure">
   </p>
 
 ## Reference
