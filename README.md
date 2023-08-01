@@ -3,15 +3,15 @@
 The Area-based Representative points OverSampling(AROS) is an algorithm targeting the class imbalance problem, it balances dataset by generating synthetic instances of minority class in safe and half-safe areas populated surrounding representative points, which is efficient with capturing the disjoints subsets of minority class and avoiding imposing class overlapping to the dataset.
 
 ## Cite AROS 
-If you wish to refer our work, please use the following BibTeX citation.
+If you wish to refer our work, please use the following BibTeX citation:
 ```bash
 Soon to be replenished
 ```
 
 ## Installation
-<!--```bash
-git clone https://github.com/felix-last/kmeans_smote.git
-```-->
+```bash
+Soon to be replenished
+```
 
 ## Basic usage
 ```bash
@@ -39,9 +39,10 @@ AROS can be parsed into four steps：
 
   1. Clustering the input features using agglomerative clustering [1]
     
-    1.1 When the `n_cluster` is not given, the algorithm will determine it by BIC automatically [2]
+  1.1 When the `n_cluster` is not given, the algorithm will determine it by BIC automatically [2]
     
-    1.2 When the `linkage` is not givem, the algorithm will determine it by CPCC automatically [3]
+  1.2 When the `linkage` is not givem, the algorithm will determine it by CPCC automatically [3]
+
   2. Extracting the representative points from clustering results [4]
   3. Populating and classifying areas surrounding representative points
   4. Generating synthetic instances using the Gaussian Generator
