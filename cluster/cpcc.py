@@ -8,7 +8,7 @@ from scipy.spatial.distance import pdist
 
 
 def cpcc(X):
-    
+    # print('cpcc')
     linkages = ['single','complete','average','ward']
     cond_m = pdist(X)
     

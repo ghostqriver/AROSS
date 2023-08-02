@@ -27,7 +27,7 @@ from utils import *
 from .classifiers import do_classification
 from .oversamplers import do_oversampling
 from .metrics import calc_score
-from aros import optimize
+from baseline import optimize
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np

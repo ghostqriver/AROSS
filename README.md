@@ -1,27 +1,31 @@
-# AROS: Area-based Representative points OverSampling in Imbalance Learning
+# AROS: Area-based Representative points OverSampling with Shifting in Imbalance Learning
 
-The Area-based Representative points OverSampling(AROS) is an algorithm targeting the class imbalance problem, it balances dataset by generating synthetic instances of minority class in safe and half-safe areas populated surrounding representative points, which is efficient with capturing the disjoints subsets of minority class and avoiding imposing class overlapping to the dataset.
+Area-based Representative Points Oversampling with Shifting (AROSS) is an algorithm targeting the class imbalance problem, it balances dataset by generating synthetic instances of minority class in safe and half-safe areas populated surrounding representative points, which is efficient with capturing the disjoints subsets of minority class and avoiding imposing class overlapping to the dataset.
 
-## Cite AROS 
+## Cite AROSS 
 If you wish to refer our work, please use the following BibTeX citation:
 ```bash
 Soon to be replenished
 ```
 
 ## Installation
-```bash
-Soon to be replenished
-```
+The AROSS algorithm is created under python 3.9 with related dependencies:
+* scikit-learn (1.1.2)
+* pandas (1.4.2)
+* numpy (1.21.5)
+* pyclustering (0.10.1.2)
+* kneed (0.8.1)
+* scipy (1.8.1)
 
 ## Basic usage
 ```bash
-from AROS import AROS
+from AROSS import AROSS
 from utils.utils import read_data
 from utils.visualize import show_oversampled
 
 X,y = read_data('Datasets/sampledata_new_3.csv')
 
-ar = AROS(n_cluster=5,linkage='ward')
+ar = AROSS(n_cluster=5,linkage='ward')
 X_oversampled,y_oversampled = ar.fit_sample(X,y)
 show_oversampled(X,y,X_oversampled,y_oversampled)
 ```
@@ -39,16 +43,24 @@ AROS can be parsed into four steps：
 
   1. Clustering the input features using agglomerative clustering [1]
     
-    1.1 When the `n_cluster` is not given, the algorithm will determine it by BIC automatically [2]
+  * When the `n_cluster` is not given, the algorithm will determine it by BIC automatically [2]
     
-    1.2 When the `linkage` is not givem, the algorithm will determine it by CPCC automatically [3]
+  * When the `linkage` is not givem, the algorithm will determine it by CPCC automatically [3]
 
   2. Extracting the representative points from clustering results [4]
   3. Populating and classifying areas surrounding representative points
   4. Generating synthetic instances using the Gaussian Generator
 
   <p align="left">
-  <img src="images/output_.gif" width="500" title="putput-figure">
+  <img src="images/output.gif" width="500" title="putput-figure">
+  </p>
+
+AROSS - shifting
+
+Shifting refers to that, one more operation of shifting reps toward the centroid of the cluster will be conducted after extracting representative points (step 2) when the `alpha` given is not 0.  The greater the `alpha`  is, the more reps will be shifted toward the centroid.
+
+<p align="left">
+  <img src="images/alpha.gif" width="500" title="putput-figure">
   </p>
 
 ## Reference

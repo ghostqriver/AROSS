@@ -3,7 +3,7 @@
 '''
 from aros.aros import AROS as AROS_
 
-class AROS():
+class AROSS():
     def __init__(self,n_cluster:int = None,linkage:str = None,alpha = 0,L = 2,IR = 1,all_safe_weight = 1):
         self.N = n_cluster
         self.linkage = linkage
