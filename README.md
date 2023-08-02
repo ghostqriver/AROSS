@@ -1,4 +1,4 @@
-# AROS: Area-based Representative points OverSampling with Shifting in Imbalance Learning
+# AROSS: Area-based Representative points OverSampling with Shifting in Imbalance Learning
 
 Area-based Representative Points Oversampling with Shifting (AROSS) is an algorithm targeting the class imbalance problem, it balances dataset by generating synthetic instances of minority class in safe and half-safe areas populated surrounding representative points, which is efficient with capturing the disjoints subsets of minority class and avoiding imposing class overlapping to the dataset.
 
@@ -35,8 +35,8 @@ Output figure:
   <img src="images/output_figure.png" width="300" title="putput-figure">
 </p>
 
-## About AROS
-AROS can be parsed into four steps：
+## About AROSS
+AROSS can be parsed into four steps：
 <p align="left">
   <img src="images/4-steps.png" width="500" title="putput-figure">
 </p>
@@ -48,7 +48,9 @@ AROS can be parsed into four steps：
   * When the `linkage` is not givem, the algorithm will determine it by CPCC automatically [3]
 
   2. Extracting the representative points from clustering results [4]
+
   3. Populating and classifying areas surrounding representative points
+  
   4. Generating synthetic instances using the Gaussian Generator
 
   <p align="left">
@@ -60,7 +62,7 @@ AROSS - shifting
 Shifting refers to that, one more operation of shifting reps toward the centroid of the cluster will be conducted after extracting representative points (step 2) when the `alpha` given is not 0.  The greater the `alpha`  is, the more reps will be shifted toward the centroid.
 
 <p align="left">
-  <img src="images/alpha.gif" width="500" title="putput-figure">
+  <img src="images/alpha.gif" width="400" title="putput-figure">
   </p>
 
 ## Reference
